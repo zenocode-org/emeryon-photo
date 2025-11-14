@@ -1,0 +1,366 @@
+---
+import 'glightbox/dist/css/glightbox.css';
+import '../styles/glightbox-custom.css';
+import { Image } from 'astro:assets';
+import type { Image as ImageType } from '../data/galleryData';
+import type { Collection } from '../data/galleryData';
+
+interface Props {
+	images: ImageType[];
+	collections: Collection[];
+	selectedCollection?: string;
+}
+
+const { images, collections, selectedCollection } = Astro.props;
+
+// Extract unique EXIF values for filtering
+const uniqueCameras = new Set<string>();
+const uniqueLenses = new Set<string>();
+const uniqueFocalLengths = new Set<number>();
+const uniqueIsos = new Set<number>();
+const uniqueApertures = new Set<number>();
+const uniqueFilmTypes = new Set<string>();
+const uniqueAnalog = new Set<string>();
+
+images.forEach((image) => {
+	if (image.exif?.model) {
+		uniqueCameras.add(image.exif.model);
+	}
+	if (image.exif?.lensModel) {
+		uniqueLenses.add(image.exif.lensModel);
+	}
+	if (image.exif?.focalLength) {
+		uniqueFocalLengths.add(image.exif.focalLength);
+	}
+	if (image.exif?.iso) {
+		uniqueIsos.add(image.exif.iso);
+	}
+	if (image.exif?.fNumber) {
+		uniqueApertures.add(image.exif.fNumber);
+	}
+	if (image.filmType) {
+		uniqueFilmTypes.add(image.filmType);
+	}
+	if (typeof image.analog === 'boolean') {
+		uniqueAnalog.add(image.analog ? 'yes' : 'no');
+	}
+});
+
+const cameras = Array.from(uniqueCameras).sort();
+const lenses = Array.from(uniqueLenses).sort();
+const focalLengths = Array.from(uniqueFocalLengths).sort((a, b) => a - b);
+const isos = Array.from(uniqueIsos).sort((a, b) => a - b);
+const apertures = Array.from(uniqueApertures).sort((a, b) => a - b);
+const filmTypes = Array.from(uniqueFilmTypes).sort();
+const analogOptions = Array.from(uniqueAnalog).sort();
+---
+
+<section class="photo-gallery-container">
+	<!-- View Switcher -->
+	<div class="flex justify-between items-center mb-6">
+		<div class="flex gap-2">
+			<button
+				id="view-grid"
+				class="view-switcher-btn active px-4 py-2 border border-gray-300 rounded transition-colors hover:bg-gray-50"
+				data-view="grid"></button>
+			<button
+				id="view-vertical"
+				class="view-switcher-btn px-4 py-2 border border-gray-300 rounded transition-colors hover:bg-gray-50"
+				data-view="vertical"></button>
+		</div>
+	</div>
+
+	<!-- Filters -->
+	<div class="mb-6 space-y-4">
+		<!-- Collection Filter -->
+		<div class="filter-section">
+			<label class="block text-sm font-medium mb-2">Collections</label>
+			<div class="flex flex-wrap gap-2">
+				<a
+					href={`/collections/`}
+					class={`px-4 py-2 border rounded transition-all ${
+						!selectedCollection
+							? 'border-black bg-black text-white'
+							: 'border-gray-200 text-gray-700 hover:border-gray-300'
+					}`}
+				>
+					All
+				</a>
+				{
+					collections.map((collection) => (
+						<a
+							href={`/collections/${collection.id}`}
+							class={`px-4 py-2 border rounded transition-all ${
+								selectedCollection === collection.id
+									? 'border-black bg-black text-white'
+									: 'border-gray-200 text-gray-700 hover:border-gray-300'
+							}`}
+						>
+							{collection.name}
+						</a>
+					))
+				}
+			</div>
+		</div>
+
+		<!-- EXIF Filters -->
+		<div class="filter-section space-y-3">
+			<!-- Camera Filter -->
+			{
+				cameras.length > 0 && (
+					<div>
+						<label class="block text-sm font-medium mb-2">Camera</label>
+						<select
+							id="filter-camera"
+							class="filter-select w-full sm:w-auto px-4 py-2 border border-gray-300 rounded bg-white"
+						>
+							<option value="">All Cameras</option>
+							{cameras.map((camera) => (
+								<option value={camera}>{camera}</option>
+							))}
+						</select>
+					</div>
+				)
+			}
+
+			<!-- Lens Filter -->
+			{
+				lenses.length > 0 && (
+					<div>
+						<label class="block text-sm font-medium mb-2">Lens</label>
+						<select
+							id="filter-lens"
+							class="filter-select w-full sm:w-auto px-4 py-2 border border-gray-300 rounded bg-white"
+						>
+							<option value="">All Lenses</option>
+							{lenses.map((lens) => (
+								<option value={lens}>{lens}</option>
+							))}
+						</select>
+					</div>
+				)
+			}
+
+			<!-- Focal Length Filter -->
+			{
+				focalLengths.length > 0 && (
+					<div>
+						<label class="block text-sm font-medium mb-2">Focal Length</label>
+						<select
+							id="filter-focal"
+							class="filter-select w-full sm:w-auto px-4 py-2 border border-gray-300 rounded bg-white"
+						>
+							<option value="">All Focal Lengths</option>
+							{focalLengths.map((focal) => (
+								<option value={focal.toString()}>{focal}mm</option>
+							))}
+						</select>
+					</div>
+				)
+			}
+
+			<!-- ISO Filter -->
+			{
+				isos.length > 0 && (
+					<div>
+						<label class="block text-sm font-medium mb-2">ISO</label>
+						<select
+							id="filter-iso"
+							class="filter-select w-full sm:w-auto px-4 py-2 border border-gray-300 rounded bg-white"
+						>
+							<option value="">All ISO</option>
+							{isos.map((iso) => (
+								<option value={iso.toString()}>{iso}</option>
+							))}
+						</select>
+					</div>
+				)
+			}
+
+			<!-- Aperture Filter -->
+			{
+				apertures.length > 0 && (
+					<div>
+						<label class="block text-sm font-medium mb-2">Aperture</label>
+						<select
+							id="filter-aperture"
+							class="filter-select w-full sm:w-auto px-4 py-2 border border-gray-300 rounded bg-white"
+						>
+							<option value="">All Apertures</option>
+							{apertures.map((aperture) => (
+								<option value={aperture.toString()}>f/{aperture}</option>
+							))}
+						</select>
+					</div>
+				)
+			}
+			<!-- Film Type Filter -->
+			{
+				filmTypes.length > 0 && (
+					<div>
+						<label class="block text-sm font-medium mb-2">Film</label>
+						<select
+							id="filter-film"
+							class="filter-select w-full sm:w-auto px-4 py-2 border border-gray-300 rounded bg-white"
+						>
+							<option value="">Tous les films</option>
+							{filmTypes.map((film) => (
+								<option value={film}>{film}</option>
+							))}
+						</select>
+					</div>
+				)
+			}
+			<!-- Analog Filter -->
+			{
+				analogOptions.length > 0 && (
+					<div>
+						<label class="block text-sm font-medium mb-2">Argentique</label>
+						<select
+							id="filter-analog"
+							class="filter-select w-full sm:w-auto px-4 py-2 border border-gray-300 rounded bg-white"
+						>
+							<option value="">Tous</option>
+							<option value="yes">Argentique</option>
+							<option value="no">Numérique</option>
+						</select>
+					</div>
+				)
+			}
+		</div>
+	</div>
+
+	<!-- Photo Grid Container -->
+	<div id="photo-grid-container" class="photo-grid-view">
+		<div id="photo-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+			{
+				images.map((image, index) => (
+					<div
+						class="photo-item group cursor-pointer"
+						data-collections={JSON.stringify(image.collections)}
+						data-camera={image.exif?.model || ''}
+						data-lens={image.exif?.lensModel || ''}
+						data-focal={image.exif?.focalLength?.toString() || ''}
+						data-iso={image.exif?.iso?.toString() || ''}
+						data-aperture={image.exif?.fNumber?.toString() || ''}
+						data-film={image.filmType || ''}
+						data-analog={typeof image.analog === 'boolean' ? (image.analog ? 'yes' : 'no') : ''}
+						data-index={index}
+					>
+						<a
+							href={image.src.src}
+							class="glightbox block w-full h-full"
+							data-gallery="gallery1"
+							data-type="image"
+							data-glightbox={image.description ? `title: ${image.description}` : undefined}
+						>
+							<Image
+								src={image.src}
+								quality={90}
+								format="webp"
+								width={image.src.width}
+								height={image.src.height}
+								class="w-full h-full object-cover transition-opacity hover:opacity-90"
+								alt={image.title}
+								loading={index < 12 ? 'eager' : 'lazy'}
+							/>
+						</a>
+					</div>
+				))
+			}
+		</div>
+	</div>
+
+	<!-- Vertical View Container (hidden by default) -->
+	<div id="photo-vertical-container" class="photo-vertical-view hidden">
+		<div class="space-y-4">
+			{
+				images.map((image, index) => (
+					<div
+						class="photo-item-vertical group cursor-pointer"
+						data-collections={JSON.stringify(image.collections)}
+						data-camera={image.exif?.model || ''}
+						data-lens={image.exif?.lensModel || ''}
+						data-focal={image.exif?.focalLength?.toString() || ''}
+						data-iso={image.exif?.iso?.toString() || ''}
+						data-aperture={image.exif?.fNumber?.toString() || ''}
+						data-film={image.filmType || ''}
+						data-analog={typeof image.analog === 'boolean' ? (image.analog ? 'yes' : 'no') : ''}
+						data-index={index}
+					>
+						<a
+							href={image.src.src}
+							class="glightbox flex flex-col sm:flex-row gap-6"
+							data-gallery="gallery1"
+							data-type="image"
+							data-glightbox={image.description ? `title: ${image.description}` : undefined}
+						>
+							<div class="flex-shrink-0 w-full sm:w-96 h-auto">
+								<Image
+									src={image.src}
+									quality={90}
+									format="webp"
+									width={image.src.width}
+									height={image.src.height}
+									class="w-full h-full object-contain max-h-[80vh]"
+									alt={image.title}
+									loading={index < 6 ? 'eager' : 'lazy'}
+								/>
+							</div>
+							<div class="flex-1">
+								<h3 class="text-lg font-semibold mb-2">{image.title}</h3>
+								{image.description && <p class="text-gray-600 mb-3">{image.description}</p>}
+								{image.exif && (
+									<div class="flex flex-wrap gap-4 text-sm text-gray-500">
+										{image.exif.model && <span>Camera: {image.exif.model}</span>}
+										{image.exif.lensModel && <span>Lens: {image.exif.lensModel}</span>}
+										{image.exif.focalLength && <span>{image.exif.focalLength}mm</span>}
+										{image.exif.fNumber && <span>f/{image.exif.fNumber}</span>}
+										{image.exif.iso && <span>ISO {image.exif.iso}</span>}
+										{image.exif.shutterSpeed && <span>1/{image.exif.shutterSpeed}s</span>}
+									</div>
+								)}
+							</div>
+						</a>
+					</div>
+				))
+			}
+		</div>
+	</div>
+</section>
+
+<script>
+	import '../scripts/photo-gallery';
+</script>
+
+<style>
+	.view-switcher-btn.active {
+		background-color: black;
+		color: white;
+		border-color: black;
+	}
+
+	.filter-section {
+		border-bottom: 1px solid rgb(229 231 235);
+		padding-bottom: 1rem;
+	}
+
+	.filter-section:last-child {
+		border-bottom: 0;
+		padding-bottom: 0;
+	}
+
+	@media (min-width: 640px) {
+		.filter-section {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 1rem;
+			align-items: flex-end;
+		}
+
+		.filter-section > div {
+			flex: 1;
+			min-width: 150px;
+		}
+	}
+</style>

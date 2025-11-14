@@ -1,0 +1,34 @@
+collections:
+  - id: kuku
+    name: Kuku
+  - id: popo
+    name: Popo
+
+images:
+  - path: kuku/kuku-trees.jpg
+    meta:
+      title: Kuku Trees
+      description: Beautiful trees in the kuku album
+      collections: [kuku]
+    exif:
+      captureDate: 2025-04-28T08:22:56.000Z
+
+  - path: popo/popo-view.jpg
+    meta:
+      title: Popo View
+      description: Amazing view from the popo album
+      collections: [featured, popo]
+    exif:
+      captureDate: 2025-03-27T08:22:56.000Z
+
+  - path: landscape.jpg
+    meta:
+      title: Landscape
+      description:
+      collections: [featured]
+
+  - path: popo/unknown.jpg
+    meta:
+      title: Unknown image
+      description: bla bla
+      collections: [popo]

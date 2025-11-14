@@ -1,0 +1,214 @@
+---
+import MainLayout from '../../layouts/MainLayout.astro';
+import PhotoGridSidebar from '../../components/PhotoGridSidebar.astro';
+import PhotoGrid from '../../components/PhotoGrid.astro';
+import PhotosLarge from '../../components/PhotosLarge.astro';
+import { getCollections, getImages } from '../../data/imageStore';
+import { Grid3x3, List, Filter } from 'lucide-astro';
+
+const allCollection = {
+	id: undefined,
+	name: 'All',
+};
+const collections = [allCollection, ...(await getCollections())];
+const { collection } = Astro.params;
+const images = await getImages(collection ? { collection } : {});
+
+export const getStaticPaths = async () => {
+	return [{ id: undefined }, ...(await getCollections())].map((collection) => {
+		return {
+			params: { collection: collection.id },
+		};
+	});
+};
+---
+
+<MainLayout>
+	<section class="py-16 pt-24">
+		<div class="container-custom">
+			<div class="mb-16 text-center">
+				<h1 class="text-4xl md:text-5xl font-bold mb-4">Gallery</h1>
+				<p class="text-gray-600 max-w-xl mx-auto">Explore my collection of photographic works</p>
+			</div>
+
+			<div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+				<!-- Main Content -->
+				<div id="photo-main-content" class="lg:col-span-3 order-1">
+					<!-- View Switcher -->
+					<div class="flex justify-between items-center mb-6">
+						<div class="flex gap-2">
+							<button
+								id="view-grid"
+								class="view-switcher-btn active px-4 py-2 border border-gray-300 rounded transition-colors hover:bg-gray-50 flex items-center gap-2"
+								data-view="grid"
+							>
+								<Grid3x3 size={18} />
+							</button>
+							<button
+								id="view-vertical"
+								class="view-switcher-btn px-4 py-2 border border-gray-300 rounded transition-colors hover:bg-gray-50 flex items-center gap-2"
+								data-view="vertical"
+							>
+								<List size={18} />
+							</button>
+							<button
+								id="toggle-filters"
+								class="view-switcher-btn px-4 py-2 border border-gray-300 rounded transition-colors hover:bg-gray-50 flex items-center gap-2"
+								title="Toggle filters"
+							>
+								<Filter size={18} />
+							</button>
+						</div>
+					</div>
+
+					<!-- Sidebar - Mobile: below buttons, Desktop: hidden (shown in separate column) -->
+					<aside id="photo-grid-sidebar-container-mobile" class="mb-6 lg:hidden hidden">
+						<PhotoGridSidebar
+							images={images}
+							collections={collections}
+							selectedCollection={collection}
+						/>
+					</aside>
+
+					<!-- Grid View -->
+					<div id="photo-grid-container" class="photo-grid-view">
+						<PhotoGrid images={images} />
+					</div>
+
+					<!-- Vertical View -->
+					<div id="photo-vertical-container" class="photo-vertical-view hidden">
+						<PhotosLarge images={images} />
+					</div>
+				</div>
+
+				<!-- Sidebar - Desktop: right side -->
+				<aside id="photo-grid-sidebar-container" class="lg:col-span-1 order-2 hidden">
+					<PhotoGridSidebar
+						images={images}
+						collections={collections}
+						selectedCollection={collection}
+					/>
+				</aside>
+			</div>
+		</div>
+	</section>
+</MainLayout>
+
+<script>
+	function setupViewSwitcher() {
+		if (typeof document === 'undefined') return;
+
+		const gridViewBtn = document.getElementById('view-grid');
+		const verticalViewBtn = document.getElementById('view-vertical');
+		const filterToggleBtn = document.getElementById('toggle-filters');
+		const gridContainer = document.getElementById('photo-grid-container');
+		const verticalContainer = document.getElementById('photo-vertical-container');
+		const sidebarContainer = document.getElementById('photo-grid-sidebar-container'); // Desktop
+		const sidebarContainerMobile = document.getElementById('photo-grid-sidebar-container-mobile'); // Mobile
+		const mainContent = document.getElementById('photo-main-content');
+
+		let currentView: string = 'grid';
+		let sidebarVisible: boolean = false; // Start hidden, will be set based on view
+
+		function isMobile(): boolean {
+			return window.innerWidth < 1024; // lg breakpoint
+		}
+
+		function updateSidebarVisibility() {
+			const mobile = isMobile();
+
+			if (mobile) {
+				// Mobile: toggle visibility of mobile sidebar (inside main content)
+				if (sidebarVisible) {
+					sidebarContainerMobile?.classList.remove('hidden');
+					filterToggleBtn?.classList.add('active');
+				} else {
+					sidebarContainerMobile?.classList.add('hidden');
+					filterToggleBtn?.classList.remove('active');
+				}
+			} else {
+				// Desktop: adjust grid columns for desktop sidebar
+				if (sidebarVisible) {
+					sidebarContainer?.classList.remove('hidden');
+					mainContent?.classList.remove('lg:col-span-4');
+					mainContent?.classList.add('lg:col-span-3');
+					filterToggleBtn?.classList.add('active');
+				} else {
+					sidebarContainer?.classList.add('hidden');
+					mainContent?.classList.remove('lg:col-span-3');
+					mainContent?.classList.add('lg:col-span-4');
+					filterToggleBtn?.classList.remove('active');
+				}
+			}
+		}
+
+		function switchView(view: string) {
+			currentView = view;
+
+			if (view === 'grid') {
+				gridContainer?.classList.remove('hidden');
+				verticalContainer?.classList.add('hidden');
+				gridViewBtn?.classList.add('active');
+				verticalViewBtn?.classList.remove('active');
+				// Grid view: show sidebar by default on desktop, hide on mobile
+				sidebarVisible = !isMobile();
+				localStorage.setItem('photo-view', 'grid');
+			} else {
+				gridContainer?.classList.add('hidden');
+				verticalContainer?.classList.remove('hidden');
+				gridViewBtn?.classList.remove('active');
+				verticalViewBtn?.classList.add('active');
+				// Vertical view: hide sidebar by default
+				sidebarVisible = false;
+				localStorage.setItem('photo-view', 'vertical');
+			}
+
+			updateSidebarVisibility();
+		}
+
+		function toggleFilters() {
+			sidebarVisible = !sidebarVisible;
+			updateSidebarVisibility();
+		}
+
+		gridViewBtn?.addEventListener('click', () => switchView('grid'));
+		verticalViewBtn?.addEventListener('click', () => switchView('vertical'));
+		filterToggleBtn?.addEventListener('click', toggleFilters);
+
+		// Handle window resize to adjust sidebar visibility
+		let resizeTimeout: ReturnType<typeof setTimeout>;
+		window.addEventListener('resize', () => {
+			clearTimeout(resizeTimeout);
+			resizeTimeout = setTimeout(() => {
+				// On mobile, hide sidebar by default; on desktop, show based on view
+				if (isMobile()) {
+					sidebarVisible = false;
+				} else {
+					// On desktop, show sidebar if in grid view
+					sidebarVisible = currentView === 'grid';
+				}
+				updateSidebarVisibility();
+			}, 100);
+		});
+
+		// Restore saved view preference
+		const savedView = localStorage.getItem('photo-view') || 'grid';
+		switchView(savedView);
+	}
+
+	if (typeof window !== 'undefined') {
+		if (document.readyState === 'loading') {
+			document.addEventListener('DOMContentLoaded', setupViewSwitcher);
+		} else {
+			setupViewSwitcher();
+		}
+	}
+</script>
+
+<style>
+	.view-switcher-btn.active {
+		background-color: black;
+		color: white;
+		border-color: black;
+	}
+</style>

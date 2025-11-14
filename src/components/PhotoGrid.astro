@@ -1,0 +1,43 @@
+---
+import PhotoMedium from './PhotoMedium.astro';
+import PhotoVerticalViewManager from './react/PhotoVerticalViewManager';
+import type { Image as ImageType } from '../data/galleryData';
+
+interface Props {
+	images: ImageType[];
+	selectedImageId?: string;
+	className?: string;
+}
+
+const { images, selectedImageId, className = '' } = Astro.props;
+---
+
+<div class={`photo-grid-container ${className}`}>
+	<PhotoVerticalViewManager client:load images={images} />
+	<div class={`photo-grid ${className}`}>
+		<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+			{
+				images.map((image, index) => (
+					<div
+						class={`photo-item aspect-square overflow-hidden rounded cursor-pointer ${
+							selectedImageId === image.title ? 'ring-2 ring-black' : ''
+						}`}
+						data-collections={JSON.stringify(image.collections)}
+						data-camera={image.exif?.model || ''}
+						data-lens={image.exif?.lensModel || ''}
+						data-focal={image.exif?.focalLength?.toString() || ''}
+						data-iso={image.exif?.iso?.toString() || ''}
+						data-aperture={image.exif?.fNumber?.toString() || ''}
+						data-capture-date={image.exif?.captureDate?.toISOString() || ''}
+						data-film={image.filmType || ''}
+						data-analog={typeof image.analog === 'boolean' ? (image.analog ? 'yes' : 'no') : ''}
+						data-image-index={index}
+						data-image-title={image.title}
+					>
+						<PhotoMedium image={image} priority={index < 12} />
+					</div>
+				))
+			}
+		</div>
+	</div>
+</div>

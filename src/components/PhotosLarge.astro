@@ -1,0 +1,118 @@
+---
+import type { Image as ImageType } from '../data/galleryData';
+import { Camera, Aperture, Folder } from 'lucide-astro';
+import PhotoPreview from './react/PhotoPreview';
+
+interface Props {
+	images: ImageType[];
+	className?: string;
+}
+
+const { images, className = '' } = Astro.props;
+---
+
+<div class={`photos-large space-y-1 ${className}`}>
+	{images.map((image, index) => (
+		<article
+			class="photo-large-item photo-item-vertical border-b border-gray-200 pb-12 mb-12 last:border-b-0 last:mb-0"
+			data-collections={JSON.stringify(image.collections)}
+			data-camera={image.exif?.model || ''}
+			data-lens={image.exif?.lensModel || ''}
+			data-focal={image.exif?.focalLength?.toString() || ''}
+			data-iso={image.exif?.iso?.toString() || ''}
+			data-aperture={image.exif?.fNumber?.toString() || ''}
+			data-capture-date={image.exif?.captureDate?.toISOString() || ''}
+			data-film={image.filmType || ''}
+			data-analog={typeof image.analog === 'boolean' ? (image.analog ? 'yes' : 'no') : ''}
+		>
+			<div class="grid grid-cols-1 lg:grid-cols-5 gap-4">
+				<!-- Photo -->
+				<div class="lg:col-span-3">
+					<div class="flex items-center justify-center lg:min-h-[50vh]">
+						<PhotoPreview
+							client:load
+							imageSrc={image.src.src}
+							imageAlt={image.title}
+							imageWidth={image.src.width}
+							imageHeight={image.src.height}
+							className="max-w-full max-h-[85vh] object-contain"
+							isEnabled={true}
+							imageTitle={image.title}
+						/>
+					</div>
+				</div>
+
+				<!-- Metadata -->
+				<aside class="lg:col-span-2">
+					<div>
+						<div>
+							<h2 class="text-2xl font-bold mb-2">
+								<a
+									href={`/photo/${encodeURIComponent(image.title)}`}
+									class="text-black hover:text-gray-600 transition-colors"
+								>
+									{image.title}
+								</a>
+							</h2>
+							{image.description && (
+								<p class="text-gray-600 leading-relaxed">{image.description}</p>
+							)}
+						</div>
+
+						{image.exif && (
+							<div class="space-y-4">
+								{image.exif.model && (
+									<div class="flex items-center gap-3">
+										<Camera size={20} class="text-gray-400 flex-shrink-0" />
+										<div class="font-medium text-gray-900">{image.exif.model}</div>
+									</div>
+								)}
+								{image.exif.lensModel && (
+									<div class="flex items-center gap-3">
+										<Aperture size={20} class="text-gray-400 flex-shrink-0" />
+										<div class="font-medium text-gray-900">{image.exif.lensModel}</div>
+									</div>
+								)}
+								<div class="grid pt-2">
+									{image.filmType && (<div class="font-medium text-gray-900">{image.filmType}</div>)}
+									{typeof image.analog === 'boolean' && (
+										<div class="font-medium text-gray-900">{image.analog ? 'Argentique' : 'Numérique'}</div>
+									)}
+									{image.exif.focalLength && (
+										<div class="font-medium text-gray-900">{image.exif.focalLength}mm</div>
+									)}
+									{image.exif.fNumber && (
+										<div class="font-medium text-gray-900">f/{image.exif.fNumber}</div>
+									)}
+									{image.exif.iso && (
+										<div class="font-medium text-gray-900">ISO {image.exif.iso}</div>
+									)}
+									{image.exif.shutterSpeed && (
+										<div class="font-medium text-gray-900">1/{image.exif.shutterSpeed}s</div>
+									)}
+								</div>
+							</div>
+						)}
+
+						{image.collections && image.collections.length > 0 && (
+							<div class="pt-2">
+								<div class="flex items-start gap-3">
+									<Folder size={18} class="text-gray-400 mt-0.5 flex-shrink-0" />
+									<div class="flex-1">
+										<div class="flex flex-wrap gap-2">
+											{image.collections.map((collectionId) => (
+												<span class="px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded">
+													{collectionId}
+												</span>
+											))}
+										</div>
+									</div>
+								</div>
+							</div>
+						)}
+					</div>
+				</aside>
+			</div>
+		</article>
+	))}
+</div>

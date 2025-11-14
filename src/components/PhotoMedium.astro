@@ -1,0 +1,34 @@
+---
+import type { Image as ImageType } from '../data/galleryData';
+import PhotoPreview from './react/PhotoPreview';
+
+interface Props {
+	image: ImageType;
+	priority?: boolean;
+	className?: string;
+}
+
+const { image, priority = false, className = '' } = Astro.props;
+---
+
+<div
+	class={`photo-medium group block w-full h-full ${className}`}
+	data-photo-id={image.title}
+	data-photo-title={image.title}
+>
+	<div class="relative w-full h-full overflow-hidden">
+		<PhotoPreview
+			client:load
+			imageSrc={image.src.src}
+			imageAlt={image.title}
+			imageWidth={image.src.width}
+			imageHeight={image.src.height}
+			className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+			isEnabled={false}
+		/>
+		<div
+			class="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300 pointer-events-none"
+		>
+		</div>
+	</div>
+</div>

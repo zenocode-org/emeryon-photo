@@ -1,0 +1,144 @@
+---
+import { Image } from 'astro:assets';
+import type { Image as ImageType } from '../data/galleryData';
+import PhotoPreview from './react/PhotoPreview';
+
+interface Props {
+	image: ImageType;
+	priority?: boolean;
+}
+
+const { image, priority = false } = Astro.props;
+
+const formatExifValue = (value: number | undefined, unit: string = '') => {
+	if (value === undefined) return null;
+	return `${value}${unit}`;
+};
+
+const formatDate = (date: Date | undefined) => {
+	if (!date) return null;
+	return new Intl.DateTimeFormat('en-US', {
+		year: 'numeric',
+		month: 'long',
+		day: 'numeric',
+	}).format(date);
+};
+---
+
+<article class="photo-large-container">
+	<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+		<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+			<!-- Main Photo -->
+			<div class="lg:col-span-2">
+				<div class="flex items-center justify-center min-h-[60vh]">
+					<PhotoPreview
+						client:load
+						imageSrc={image.src.src}
+						imageAlt={image.title}
+						imageWidth={image.src.width}
+						imageHeight={image.src.height}
+						className="max-w-full max-h-[80vh] object-contain"
+						isEnabled={true}
+						imageTitle={image.title}
+					/>
+				</div>
+			</div>
+
+			<!-- Sidebar Metadata -->
+			<aside class="lg:col-span-1">
+				<div class="sticky top-8 space-y-6">
+					<!-- Title & Description -->
+					<div>
+						<h1 class="text-2xl font-bold mb-2">
+							<a
+								href={`/photo/${encodeURIComponent(image.title)}`}
+								class="text-black hover:text-gray-600 transition-colors"
+							>
+								{image.title}
+							</a>
+						</h1>
+						{image.description && <p class="text-gray-600 mb-4">{image.description}</p>}
+					</div>
+
+					<!-- EXIF Data -->
+					{
+						image.exif && (
+							<div class="border-t border-gray-200 pt-6">
+								<h2 class="text-sm font-semibold uppercase tracking-wide text-gray-500 mb-4">
+									Camera Settings
+								</h2>
+								<dl class="space-y-3">
+									{image.exif.model && (
+										<div>
+											<dt class="text-sm text-gray-500">Camera</dt>
+											<dd class="text-base font-medium">{image.exif.model}</dd>
+										</div>
+									)}
+									{image.exif.lensModel && (
+										<div>
+											<dt class="text-sm text-gray-500">Lens</dt>
+											<dd class="text-base font-medium">{image.exif.lensModel}</dd>
+										</div>
+									)}
+									{image.exif.focalLength && (
+										<div>
+											<dt class="text-sm text-gray-500">Focal Length</dt>
+											<dd class="text-base font-medium">
+												{formatExifValue(image.exif.focalLength, 'mm')}
+											</dd>
+										</div>
+									)}
+									{image.exif.fNumber && (
+										<div>
+											<dt class="text-sm text-gray-500">Aperture</dt>
+											<dd class="text-base font-medium">f/{image.exif.fNumber}</dd>
+										</div>
+									)}
+									{image.exif.iso && (
+										<div>
+											<dt class="text-sm text-gray-500">ISO</dt>
+											<dd class="text-base font-medium">{formatExifValue(image.exif.iso)}</dd>
+										</div>
+									)}
+									{image.exif.shutterSpeed && (
+										<div>
+											<dt class="text-sm text-gray-500">Shutter Speed</dt>
+											<dd class="text-base font-medium">1/{image.exif.shutterSpeed}s</dd>
+										</div>
+									)}
+									{image.exif.captureDate && (
+										<div>
+											<dt class="text-sm text-gray-500">Date</dt>
+											<dd class="text-base font-medium">{formatDate(image.exif.captureDate)}</dd>
+										</div>
+									)}
+								</dl>
+							</div>
+						)
+					}
+
+					<!-- Collections -->
+					{
+						image.collections && image.collections.length > 0 && (
+							<div class="border-t border-gray-200 pt-6">
+								<h2 class="text-sm font-semibold uppercase tracking-wide text-gray-500 mb-4">
+									Collections
+								</h2>
+								<div class="flex flex-wrap gap-2">
+									{image.collections.map((collectionId) => (
+										<a
+											href={`/collections/${collectionId}`}
+											class="px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 rounded transition-colors"
+										>
+											{collectionId}
+										</a>
+									))}
+								</div>
+							</div>
+						)
+					}
+				</div>
+			</aside>
+		</div>
+	</div>
+</article>

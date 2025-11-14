@@ -1,0 +1,10 @@
+collections:
+  - id: kuku
+    name: Kuku
+
+images:
+  - path: kuku/kuku-trees.jpg
+    meta:
+      title: Kuku Trees
+      description: Beautiful trees in the kuku album
+      collections: [kuku, invalid]

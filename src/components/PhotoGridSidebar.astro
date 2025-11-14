@@ -1,0 +1,835 @@
+---
+import type { Image as ImageType } from '../data/galleryData';
+import type { Collection } from '../data/galleryData';
+import { Camera, Aperture, Calendar, Folder } from 'lucide-astro';
+
+interface Props {
+	images: ImageType[];
+	collections: Collection[];
+	selectedCollection?: string;
+}
+
+const { images, collections, selectedCollection } = Astro.props;
+
+// Extract unique values for sidebar with counts
+interface CategoryItem {
+	value: string | number;
+	count: number;
+}
+
+const camerasMap = new Map<string, number>();
+const lensesMap = new Map<string, number>();
+const yearsMap = new Map<number, number>();
+const filmTypesMap = new Map<string, number>();
+const analogMap = new Map<string, number>(); // 'yes' | 'no'
+
+images.forEach((image) => {
+	if (image.exif?.model) {
+		camerasMap.set(image.exif.model, (camerasMap.get(image.exif.model) || 0) + 1);
+	}
+	if (image.exif?.lensModel) {
+		lensesMap.set(image.exif.lensModel, (lensesMap.get(image.exif.lensModel) || 0) + 1);
+	}
+	if (image.exif?.captureDate) {
+		const year = new Date(image.exif.captureDate).getFullYear();
+		yearsMap.set(year, (yearsMap.get(year) || 0) + 1);
+	}
+	if (image.filmType) {
+		filmTypesMap.set(image.filmType, (filmTypesMap.get(image.filmType) || 0) + 1);
+	}
+	if (typeof image.analog === 'boolean') {
+		const val = image.analog ? 'yes' : 'no';
+		analogMap.set(val, (analogMap.get(val) || 0) + 1);
+	}
+});
+
+const cameras: CategoryItem[] = Array.from(camerasMap.entries())
+	.map(([value, count]) => ({ value, count }))
+	.sort((a, b) => b.count - a.count);
+
+const lenses: CategoryItem[] = Array.from(lensesMap.entries())
+	.map(([value, count]) => ({ value, count }))
+	.sort((a, b) => b.count - a.count);
+
+const years: CategoryItem[] = Array.from(yearsMap.entries())
+	.map(([value, count]) => ({ value, count }))
+	.sort((a, b) => b.count - a.count);
+
+const filmTypes: CategoryItem[] = Array.from(filmTypesMap.entries())
+	.map(([value, count]) => ({ value, count }))
+	.sort((a, b) => b.count - a.count);
+
+const analogOptions: CategoryItem[] = Array.from(analogMap.entries())
+	.map(([value, count]) => ({ value, count }))
+	.sort((a, b) => b.count - a.count);
+const MAX_ITEMS_DEFAULT = 3;
+
+// Sort collections by count (descending)
+const sortedCollections = collections
+	.filter((collection) => collection.id !== undefined && collection.id !== null)
+	.map((collection) => ({
+		...collection,
+		count: images.filter((img) => img.collections.includes(collection.id)).length,
+	}))
+	.sort((a, b) => b.count - a.count);
+---
+
+<aside
+	class="photo-grid-sidebar"
+	id="photo-grid-sidebar"
+	data-selected-collection={selectedCollection || ''}
+>
+	<div class="space-y-6">
+		<!-- Photo Count -->
+		<div>
+			<div class="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">Photos</div>
+			<div class="flex items-center gap-3">
+				<div class="text-2xl font-bold" id="photo-count">{images.length}</div>
+				<span
+					id="clear-filters"
+					class="clear-filters-text text-xs text-gray-500 hover:text-black cursor-pointer transition-colors"
+				>
+					Clear Filters
+				</span>
+			</div>
+		</div>
+
+		<!-- Collections -->
+		{
+			collections.length > 0 && (
+				<div>
+					<div class="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2 flex items-center gap-2">
+						<Folder size={14} />
+						<span>Collections</span>
+					</div>
+					<div class="space-y-1">
+						<button
+							data-filter="collection"
+							data-value=""
+							class={`filter-btn pill-btn w-full text-left px-2 py-1.5 rounded-md transition-colors text-xs uppercase ${
+								!selectedCollection
+									? 'bg-black text-white'
+									: 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+							}`}
+						>
+							All{' '}
+							<span class="text-gray-500" data-count="">
+								({images.length})
+							</span>
+						</button>
+						{sortedCollections.map((collection) => (
+							<button
+								data-filter="collection"
+								data-value={collection.id}
+								class={`filter-btn pill-btn w-full text-left px-2 py-1.5 rounded-md transition-colors text-xs uppercase ${
+									selectedCollection === collection.id
+										? 'bg-black text-white'
+										: 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+								}`}
+							>
+								{collection.name}{' '}
+								<span class="text-gray-500" data-count="">
+									({collection.count})
+								</span>
+							</button>
+						))}
+					</div>
+				</div>
+			)
+		}
+
+		<!-- Years -->
+		{
+			years.length > 0 && (
+				<div class="category-section" data-category="year">
+					<div class="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2 flex items-center gap-2">
+						<Calendar size={14} />
+						<span>Years</span>
+					</div>
+					<div class="space-y-1">
+						<div class="category-items" data-category="year">
+							{years.slice(0, MAX_ITEMS_DEFAULT).map(({ value, count }) => (
+								<button
+									data-filter="year"
+									data-value={value.toString()}
+									class="filter-btn pill-btn px-2 py-1.5 rounded-md transition-colors text-xs uppercase bg-gray-100 hover:bg-gray-200 text-gray-700"
+								>
+									{value}{' '}
+									<span class="text-gray-500" data-count="">
+										({count})
+									</span>
+								</button>
+							))}
+						</div>
+						{years.length > MAX_ITEMS_DEFAULT && (
+							<div class="category-hidden is-hidden" data-category="year">
+								{years.slice(MAX_ITEMS_DEFAULT).map(({ value, count }) => (
+									<button
+										data-filter="year"
+										data-value={value.toString()}
+										class="filter-btn pill-btn px-2 py-1.5 rounded-md transition-colors text-xs uppercase bg-gray-100 hover:bg-gray-200 text-gray-700"
+									>
+										{value}{' '}
+										<span class="text-gray-500" data-count="">
+											({count})
+										</span>
+									</button>
+								))}
+							</div>
+						)}
+						{years.length > MAX_ITEMS_DEFAULT && (
+							<button
+								class="more-btn text-xs uppercase tracking-wider px-2 py-1 rounded-md border border-gray-300 hover:bg-gray-100 text-gray-600 mt-1"
+								data-category="year"
+							>
+								<span class="more-text">More</span>
+								<span class="more-count hidden">({years.length - MAX_ITEMS_DEFAULT})</span>
+								<span class="more-icon">▼</span>
+							</button>
+						)}
+					</div>
+				</div>
+			)
+		}
+
+		<!-- Cameras -->
+		{
+			cameras.length > 0 && (
+				<div class="category-section" data-category="camera">
+					<div class="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2 flex items-center gap-2">
+						<Camera size={14} />
+						<span>Cameras</span>
+					</div>
+					<div class="space-y-1">
+						<div class="category-items" data-category="camera">
+							{cameras.slice(0, MAX_ITEMS_DEFAULT).map(({ value, count }) => (
+								<button
+									data-filter="camera"
+									data-value={value}
+									class="filter-btn pill-btn px-2 py-1.5 rounded-md transition-colors text-xs uppercase bg-gray-100 hover:bg-gray-200 text-gray-700"
+								>
+									{value}{' '}
+									<span class="text-gray-500" data-count="">
+										({count})
+									</span>
+								</button>
+							))}
+						</div>
+						{cameras.length > MAX_ITEMS_DEFAULT && (
+							<div class="category-hidden is-hidden" data-category="camera">
+								{cameras.slice(MAX_ITEMS_DEFAULT).map(({ value, count }) => (
+									<button
+										data-filter="camera"
+										data-value={value}
+										class="filter-btn pill-btn px-2 py-1.5 rounded-md transition-colors text-xs uppercase bg-gray-100 hover:bg-gray-200 text-gray-700"
+									>
+										{value}{' '}
+										<span class="text-gray-500" data-count="">
+											({count})
+										</span>
+									</button>
+								))}
+							</div>
+						)}
+						{cameras.length > MAX_ITEMS_DEFAULT && (
+							<button
+								class="more-btn text-xs uppercase tracking-wider px-2 py-1 rounded-md border border-gray-300 hover:bg-gray-100 text-gray-600 mt-1"
+								data-category="camera"
+							>
+								<span class="more-text">More</span>
+								<span class="more-count hidden">({cameras.length - MAX_ITEMS_DEFAULT})</span>
+								<span class="more-icon">▼</span>
+							</button>
+						)}
+					</div>
+				</div>
+			)
+		}
+
+		<!-- Lenses -->
+		{
+			lenses.length > 0 && (
+				<div class="category-section" data-category="lens">
+					<div class="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2 flex items-center gap-2">
+						<Aperture size={14} />
+						<span>Lenses</span>
+					</div>
+					<div class="space-y-1">
+						<div class="category-items" data-category="lens">
+							{lenses.slice(0, MAX_ITEMS_DEFAULT).map(({ value, count }) => (
+								<button
+									data-filter="lens"
+									data-value={value}
+									class="filter-btn pill-btn px-2 py-1.5 rounded-md transition-colors text-xs uppercase bg-gray-100 hover:bg-gray-200 text-gray-700"
+								>
+									{value}{' '}
+									<span class="text-gray-500" data-count="">
+										({count})
+									</span>
+								</button>
+							))}
+						</div>
+						{lenses.length > MAX_ITEMS_DEFAULT && (
+							<div class="category-hidden is-hidden" data-category="lens">
+								{lenses.slice(MAX_ITEMS_DEFAULT).map(({ value, count }) => (
+									<button
+										data-filter="lens"
+										data-value={value}
+										class="filter-btn pill-btn px-2 py-1.5 rounded-md transition-colors text-xs uppercase bg-gray-100 hover:bg-gray-200 text-gray-700"
+									>
+										{value}{' '}
+										<span class="text-gray-500" data-count="">
+											({count})
+										</span>
+									</button>
+								))}
+							</div>
+						)}
+						{lenses.length > MAX_ITEMS_DEFAULT && (
+							<button
+								class="more-btn text-xs uppercase tracking-wider px-2 py-1 rounded-md border border-gray-300 hover:bg-gray-100 text-gray-600 mt-1"
+								data-category="lens"
+							>
+								<span class="more-text">More</span>
+								<span class="more-count hidden">({lenses.length - MAX_ITEMS_DEFAULT})</span>
+								<span class="more-icon">▼</span>
+							</button>
+						)}
+					</div>
+				</div>
+			)
+		}
+
+		<!-- Film Types -->
+		{
+			filmTypes.length > 0 && (
+				<div class="category-section" data-category="film">
+					<div class="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">
+						<span>Film</span>
+					</div>
+					<div class="space-y-1">
+						<div class="category-items" data-category="film">
+							{filmTypes.slice(0, MAX_ITEMS_DEFAULT).map(({ value, count }) => (
+								<button
+									data-filter="film"
+									data-value={value as string}
+									class="filter-btn pill-btn px-2 py-1.5 rounded-md transition-colors text-xs uppercase bg-gray-100 hover:bg-gray-200 text-gray-700"
+								>
+									{value}{' '}
+									<span class="text-gray-500" data-count="">
+										({count})
+									</span>
+								</button>
+							))}
+						</div>
+						{filmTypes.length > MAX_ITEMS_DEFAULT && (
+							<div class="category-hidden is-hidden" data-category="film">
+								{filmTypes.slice(MAX_ITEMS_DEFAULT).map(({ value, count }) => (
+									<button
+										data-filter="film"
+										data-value={value as string}
+										class="filter-btn pill-btn px-2 py-1.5 rounded-md transition-colors text-xs uppercase bg-gray-100 hover:bg-gray-200 text-gray-700"
+									>
+										{value}{' '}
+										<span class="text-gray-500" data-count="">
+											({count})
+										</span>
+									</button>
+								))}
+							</div>
+						)}
+						{filmTypes.length > MAX_ITEMS_DEFAULT && (
+							<button
+								class="more-btn text-xs uppercase tracking-wider px-2 py-1 rounded-md border border-gray-300 hover:bg-gray-100 text-gray-600 mt-1"
+								data-category="film"
+							>
+								<span class="more-text">More</span>
+								<span class="more-count hidden">({filmTypes.length - MAX_ITEMS_DEFAULT})</span>
+								<span class="more-icon">▼</span>
+							</button>
+						)}
+					</div>
+				</div>
+			)
+		}
+
+		<!-- Analog -->
+		{
+			analogOptions.length > 0 && (
+				<div class="category-section" data-category="analog">
+					<div class="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">
+						<span>Argentique</span>
+					</div>
+					<div class="space-y-1">
+						<div class="category-items" data-category="analog">
+							{analogOptions.map(({ value, count }) => (
+								<button
+									data-filter="analog"
+									data-value={value as string}
+									class="filter-btn pill-btn px-2 py-1.5 rounded-md transition-colors text-xs uppercase bg-gray-100 hover:bg-gray-200 text-gray-700"
+								>
+									{value === 'yes' ? 'Argentique' : 'Numérique'}{' '}
+									<span class="text-gray-500" data-count="">
+										({count})
+									</span>
+								</button>
+							))}
+						</div>
+					</div>
+				</div>
+			)
+		}
+	</div>
+</aside>
+
+<script>
+	interface FilterState {
+		collection?: string;
+		year?: string;
+		camera?: string;
+		lens?: string;
+		film?: string;
+		analog?: string; // 'yes' | 'no'
+	}
+
+	function setupSidebarFiltering() {
+		if (typeof document === 'undefined') return;
+
+		// Helper to check if element is actually visible (accounting for CSS media queries)
+		const isElementVisible = (el: HTMLElement): boolean => {
+			if (!el) return false;
+			const style = window.getComputedStyle(el);
+			return style.display !== 'none' && style.visibility !== 'hidden' && el.offsetParent !== null;
+		};
+
+		const isMobile = window.innerWidth < 1024; // lg breakpoint
+		let sidebar: HTMLElement | null = null;
+		
+		// On desktop, use desktop sidebar; on mobile, use mobile sidebar
+		if (!isMobile) {
+			// Desktop: find sidebar in desktop container
+			const desktopContainer = document.getElementById('photo-grid-sidebar-container');
+			if (desktopContainer) {
+				sidebar = desktopContainer.querySelector('.photo-grid-sidebar') as HTMLElement;
+			}
+		} else {
+			// Mobile: find sidebar in mobile container
+			const mobileContainer = document.getElementById('photo-grid-sidebar-container-mobile');
+			if (mobileContainer) {
+				sidebar = mobileContainer.querySelector('.photo-grid-sidebar') as HTMLElement;
+			}
+		}
+		
+		// Fallback: if not found, try to find any visible sidebar
+		if (!sidebar) {
+			const allSidebars = document.querySelectorAll('.photo-grid-sidebar');
+			for (const s of allSidebars) {
+				const el = s as HTMLElement;
+				const parent = el.closest('[id*="sidebar-container"]') as HTMLElement;
+				// Check if sidebar and its container are actually visible
+				if (parent && isElementVisible(parent) && isElementVisible(el)) {
+					sidebar = el;
+					break;
+				}
+			}
+		}
+		
+		if (!sidebar) return;
+		
+		// Skip if this sidebar is already initialized
+		if (sidebar.getAttribute('data-filtering-initialized') === 'true') {
+			return;
+		}
+
+		// Only count visible items to avoid double counting when both grid and vertical views exist
+		const getVisiblePhotoItems = () => {
+			const gridContainer = document.getElementById('photo-grid-container');
+			const verticalContainer = document.getElementById('photo-vertical-container');
+
+			// Check which view is visible (not hidden)
+			if (gridContainer && !gridContainer.classList.contains('hidden')) {
+				return gridContainer.querySelectorAll('.photo-item');
+			} else if (verticalContainer && !verticalContainer.classList.contains('hidden')) {
+				return verticalContainer.querySelectorAll('.photo-item-vertical');
+			}
+			// Fallback: if neither is explicitly hidden, prefer grid view
+			return document.querySelectorAll('.photo-item');
+		};
+		const photoCountEl = sidebar?.querySelector('#photo-count') as HTMLElement;
+		const filterButtons = sidebar?.querySelectorAll('.filter-btn');
+		const clearFiltersBtn = sidebar?.querySelector('#clear-filters') as HTMLElement;
+		const moreButtons = sidebar?.querySelectorAll('.more-btn');
+
+		let activeFilters: FilterState = {};
+
+		function getImageYear(image: HTMLElement): string | null {
+			const captureDate = image.dataset.captureDate;
+			if (!captureDate) return null;
+			return new Date(captureDate).getFullYear().toString();
+		}
+
+		function matchesFilters(image: HTMLElement): boolean {
+			// Collection filter
+			if (activeFilters.collection !== undefined) {
+				if (activeFilters.collection === '') {
+					// "All" selected - no filter
+				} else {
+					const collections = JSON.parse(image.dataset.collections || '[]');
+					if (!collections.includes(activeFilters.collection)) {
+						return false;
+					}
+				}
+			}
+
+			// Year filter
+			if (activeFilters.year) {
+				const imageYear = getImageYear(image);
+				if (!imageYear || imageYear !== activeFilters.year) {
+					return false;
+				}
+			}
+
+			// Camera filter
+			if (activeFilters.camera) {
+				const imageCamera = image.dataset.camera || '';
+				if (imageCamera !== activeFilters.camera) {
+					return false;
+				}
+			}
+
+			// Lens filter
+			if (activeFilters.lens) {
+				const imageLens = image.dataset.lens || '';
+				if (imageLens !== activeFilters.lens) {
+					return false;
+				}
+			}
+
+			// Film filter
+			if (activeFilters.film) {
+				const imageFilm = image.dataset.film || '';
+				if (imageFilm !== activeFilters.film) {
+					return false;
+				}
+			}
+
+			// Analog filter
+			if (activeFilters.analog) {
+				const imageAnalog = image.dataset.analog || '';
+				if (imageAnalog !== activeFilters.analog) {
+					return false;
+				}
+			}
+
+			return true;
+		}
+
+		function getVisibleImages(): HTMLElement[] {
+			const photoItems = getVisiblePhotoItems();
+			return Array.from(photoItems).filter((item) => {
+				const element = item as HTMLElement;
+				return matchesFilters(element);
+			}) as HTMLElement[];
+		}
+
+		function matchesSingleFilter(
+			image: HTMLElement,
+			filterType: string,
+			filterValue: string,
+		): boolean {
+			switch (filterType) {
+				case 'collection':
+					if (filterValue === '') {
+						return true; // "All" matches everything
+					} else {
+						const collections = JSON.parse(image.dataset.collections || '[]');
+						return collections.includes(filterValue);
+					}
+				case 'year':
+					const imageYear = getImageYear(image);
+					return imageYear !== null && imageYear === filterValue;
+				case 'camera':
+					return (image.dataset.camera || '') === filterValue;
+				case 'lens':
+					return (image.dataset.lens || '') === filterValue;
+				case 'film':
+					return (image.dataset.film || '') === filterValue;
+				case 'analog':
+					return (image.dataset.analog || '') === filterValue;
+				default:
+					return false;
+			}
+		}
+
+		function updateCategoryCounts() {
+			// Count based on images that match OTHER active filters (excluding the filter being counted)
+			// This way each filter shows how many images match it, given the current filter context
+			const photoItems = getVisiblePhotoItems();
+
+			filterButtons?.forEach((btn) => {
+				const button = btn as HTMLElement;
+				const filterType = button.dataset.filter;
+				const filterValue = button.dataset.value;
+				const countSpan = button.querySelector('[data-count]') as HTMLElement;
+
+				if (!filterType || filterValue === undefined || !countSpan) return;
+
+				// Count images that match this specific filter AND all other active filters
+				let count = 0;
+				photoItems.forEach((item) => {
+					const element = item as HTMLElement;
+
+					// Check if this image matches the filter we're counting
+					if (!matchesSingleFilter(element, filterType, filterValue)) {
+						return;
+					}
+
+					// Check if this image matches all OTHER active filters (excluding the one we're counting)
+					let matchesOtherFilters = true;
+					for (const [key, value] of Object.entries(activeFilters)) {
+						if (key === filterType) continue; // Skip the filter we're counting
+						if (value !== undefined && value !== '') {
+							if (!matchesSingleFilter(element, key, value as string)) {
+								matchesOtherFilters = false;
+								break;
+							}
+						}
+					}
+
+					if (matchesOtherFilters) {
+						count++;
+					}
+				});
+
+				// Update the count display
+				countSpan.textContent = `(${count})`;
+			});
+
+			// Update the main photo count
+			const visibleImages = getVisibleImages();
+			if (photoCountEl) {
+				photoCountEl.textContent = visibleImages.length.toString();
+			}
+		}
+
+		function applyFilters() {
+			const photoItems = getVisiblePhotoItems();
+			let visibleCount = 0;
+
+			photoItems.forEach((item) => {
+				const element = item as HTMLElement;
+				const matches = matchesFilters(element);
+
+				if (matches) {
+					element.style.display = '';
+					visibleCount++;
+				} else {
+					element.style.display = 'none';
+				}
+			});
+
+			// Update category counts based on visible images (this also updates photo count)
+			updateCategoryCounts();
+
+			// Update active button states
+			updateButtonStates();
+		}
+
+		function updateButtonStates() {
+			filterButtons?.forEach((btn) => {
+				const button = btn as HTMLElement;
+				const filterType = button.dataset.filter;
+				const filterValue = button.dataset.value;
+
+				if (
+					filterType &&
+					filterValue !== undefined &&
+					activeFilters[filterType as keyof FilterState] === filterValue
+				) {
+					button.classList.add('bg-black', 'text-white');
+					button.classList.remove('bg-gray-100', 'hover:bg-gray-200', 'text-gray-700');
+					// Update count color for active buttons
+					const countSpan = button.querySelector('[data-count]') as HTMLElement;
+					if (countSpan) {
+						countSpan.classList.remove('text-gray-500');
+						countSpan.classList.add('text-gray-300');
+					}
+				} else {
+					button.classList.remove('bg-black', 'text-white');
+					button.classList.add('bg-gray-100', 'hover:bg-gray-200', 'text-gray-700');
+					// Restore count color for inactive buttons
+					const countSpan = button.querySelector('[data-count]') as HTMLElement;
+					if (countSpan) {
+						countSpan.classList.add('text-gray-500');
+						countSpan.classList.remove('text-gray-300');
+					}
+				}
+			});
+		}
+
+		function handleFilterClick(e: Event) {
+			const button = e.currentTarget as HTMLElement;
+			const filterType = button.dataset.filter;
+			const filterValue = button.dataset.value;
+
+			if (!filterType) return;
+
+			// Toggle filter
+			if (activeFilters[filterType as keyof FilterState] === filterValue) {
+				// Deselect if already selected
+				delete activeFilters[filterType as keyof FilterState];
+			} else {
+				// Select filter
+				activeFilters[filterType as keyof FilterState] = filterValue as any;
+			}
+
+			applyFilters();
+		}
+
+		function clearFilters() {
+			activeFilters = {};
+			applyFilters();
+		}
+
+		function handleMoreClick(e: Event) {
+			e.preventDefault();
+			e.stopPropagation();
+			const button = e.currentTarget as HTMLElement;
+			const category = button.dataset.category;
+			if (!category) return;
+
+			const categorySection = button.closest('.category-section');
+			const hiddenItems = categorySection?.querySelector('.category-hidden') as HTMLElement;
+			const moreText = button.querySelector('.more-text') as HTMLElement;
+			const moreIcon = button.querySelector('.more-icon') as HTMLElement;
+			const moreCount = button.querySelector('.more-count') as HTMLElement;
+
+			if (!hiddenItems || !moreText || !moreIcon) {
+				console.warn('Missing elements for more button', { hiddenItems, moreText, moreIcon });
+				return;
+			}
+
+			const isExpanded = !hiddenItems.classList.contains('is-hidden');
+
+			if (isExpanded) {
+				hiddenItems.classList.add('is-hidden');
+				moreText.textContent = 'More';
+				moreIcon.textContent = '▼';
+				if (moreCount) {
+					moreCount.classList.add('hidden');
+				}
+			} else {
+				hiddenItems.classList.remove('is-hidden');
+				moreText.textContent = 'Less';
+				moreIcon.textContent = '▲';
+				if (moreCount) {
+					moreCount.classList.remove('hidden');
+				}
+			}
+		}
+
+		// Attach event listeners
+		filterButtons?.forEach((btn) => {
+			btn.addEventListener('click', handleFilterClick);
+		});
+
+		clearFiltersBtn?.addEventListener('click', clearFilters);
+
+		moreButtons?.forEach((btn) => {
+			btn.addEventListener('click', handleMoreClick);
+		});
+
+		// Initialize with collection filter if present
+		const initialCollection = sidebar?.dataset.selectedCollection;
+		if (initialCollection !== undefined) {
+			activeFilters.collection = initialCollection || '';
+		}
+
+		applyFilters();
+		
+		// Mark this sidebar as initialized
+		if (sidebar) {
+			sidebar.setAttribute('data-filtering-initialized', 'true');
+		}
+	}
+
+	if (typeof window !== 'undefined') {
+		// Delay initialization slightly to ensure DOM is ready and visibility is set
+		const initSidebarFiltering = () => {
+			setupSidebarFiltering();
+		};
+		
+		if (document.readyState === 'loading') {
+			document.addEventListener('DOMContentLoaded', () => {
+				// Small delay to ensure CSS classes are applied
+				setTimeout(initSidebarFiltering, 10);
+			});
+		} else {
+			setTimeout(initSidebarFiltering, 10);
+		}
+	}
+</script>
+
+<style>
+	.photo-grid-sidebar {
+		position: static;
+	}
+
+	@media (min-width: 1024px) {
+		.photo-grid-sidebar {
+			position: sticky;
+			top: 2rem;
+			max-height: calc(100vh - 4rem);
+			overflow-y: auto;
+		}
+	}
+
+	.filter-btn {
+		cursor: pointer;
+	}
+
+	.filter-btn:focus {
+		outline: 2px solid black;
+		outline-offset: 2px;
+	}
+
+	.pill-btn {
+		font-size: 0.75rem;
+		line-height: 1.5;
+		display: inline-flex;
+		align-items: center;
+		white-space: nowrap;
+	}
+
+	.more-btn {
+		cursor: pointer;
+		display: inline-flex;
+		align-items: center;
+		gap: 0.25rem;
+		transition: all 0.2s;
+	}
+
+	.more-btn:hover .more-count {
+		display: inline !important;
+	}
+
+	.category-items {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.25rem;
+	}
+
+	.category-hidden {
+		flex-wrap: wrap;
+		gap: 0.25rem;
+		margin-top: 0.25rem;
+	}
+
+	.category-hidden.is-hidden {
+		display: none;
+	}
+
+	.category-hidden:not(.is-hidden) {
+		display: flex;
+	}
+</style>

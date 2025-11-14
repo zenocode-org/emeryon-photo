@@ -1,0 +1,42 @@
+---
+import MainLayout from '../../layouts/MainLayout.astro';
+import PhotoDetailPage from '../../components/PhotoDetailPage.astro';
+import { getImages } from '../../data/imageStore';
+import { ArrowLeft } from 'lucide-astro';
+
+export async function getStaticPaths() {
+	const allImages = await getImages();
+	return allImages.map((image) => ({
+		params: { title: image.title },
+	}));
+}
+
+const { title } = Astro.params;
+const allImages = await getImages();
+const image = allImages.find((img) => img.title === decodeURIComponent(title || ''));
+
+if (!image) {
+	return Astro.redirect('/404');
+}
+
+// Get related images (images from same collections, excluding current)
+const relatedImages = allImages.filter(
+	(img) =>
+		img.title !== image.title && img.collections.some((col) => image.collections.includes(col)),
+);
+---
+
+<MainLayout>
+	<section class="py-16 pt-24">
+		<div class="container-custom">
+			<a
+				href={`/collections`}
+				class="inline-flex items-center gap-2 text-gray-700 hover:text-black transition-colors mb-6 group"
+			>
+				<ArrowLeft size={20} class="group-hover:-translate-x-1 transition-transform" />
+				<span>Retour à la galerie</span>
+			</a>
+			<PhotoDetailPage image={image} allImages={allImages} relatedImages={relatedImages} />
+		</div>
+	</section>
+</MainLayout>
