@@ -2,6 +2,6 @@
 title: À propos de moi
 ---
 
-### Salut, je suis ... 👋
+### Salut, je suis Axel Frau-Orsini 👋
 
-Voici mon site
+Voici ma galerie photo.
