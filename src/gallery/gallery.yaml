@@ -2,11 +2,13 @@ collections:
   - id: nature
     name: Nature
   - id: travel
-    name: Travel
+    name: Voyage
   - id: street
     name: Street
   - id: rassemblements
     name: Rassemblements
+  - id: equestre
+    name: Equestre
 images:
   - path: nature/nature-2.jpg
     meta:
