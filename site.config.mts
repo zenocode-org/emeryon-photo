@@ -15,7 +15,7 @@ export default {
 	socialLinks: [
 		{
 			name: 'Instagram',
-			url: 'https://www.instagram.com/',
+			url: 'https://www.instagram.com/emeryon_photo',
 			icon: Instagram,
 		} as SocialLink,
 	],
