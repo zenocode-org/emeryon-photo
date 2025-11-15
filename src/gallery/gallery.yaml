@@ -22,16 +22,14 @@ images:
       collections:
         - featured
         - nature
-    exif:
-      shutterSpeed: .nan
+    exif: {}
   - path: nature/nature-5.jpg
     meta:
       title: Nature scene 5
       description: Natural landscape showing the raw beauty of the environment.
       collections:
         - nature
-    exif:
-      shutterSpeed: .nan
+    exif: {}
   - path: nature/nature-7.jpg
     meta:
       title: Nature scene 7
@@ -70,8 +68,7 @@ images:
       description: Majestic natural landscape displaying environmental splendor.
       collections:
         - nature
-    exif:
-      shutterSpeed: .nan
+    exif: {}
   - path: street/stree-1.jpg
     meta:
       title: Street photography 1

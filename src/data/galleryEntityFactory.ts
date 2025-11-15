@@ -1,6 +1,41 @@
 import path from 'path';
-import type { GalleryImage } from './galleryData.ts';
+import type { GalleryImage, ImageExif } from './galleryData.ts';
 import exifr from 'exifr';
+
+/**
+ * Checks if a value is a valid number (not NaN, Infinity, null, or undefined)
+ */
+function isValidNumber(value: unknown): value is number {
+	return typeof value === 'number' && !isNaN(value) && isFinite(value);
+}
+
+/**
+ * Filters out invalid values (NaN, Infinity, undefined, null) from EXIF data
+ */
+function cleanExifData(exif: Partial<ImageExif>): Partial<ImageExif> {
+	const cleaned: Partial<ImageExif> = {};
+
+	for (const [key, value] of Object.entries(exif)) {
+		// Skip undefined and null values
+		if (value === undefined || value === null) {
+			continue;
+		}
+
+		// For numbers, check if they're valid (not NaN or Infinity)
+		if (typeof value === 'number') {
+			if (isValidNumber(value)) {
+				cleaned[key as keyof ImageExif] = value;
+			}
+			// Skip NaN and Infinity values
+			continue;
+		}
+
+		// Keep other valid types (strings, dates, etc.)
+		cleaned[key as keyof ImageExif] = value;
+	}
+
+	return cleaned;
+}
 
 export const createGalleryImage = async (
 	galleryDir: string,
@@ -18,7 +53,17 @@ export const createGalleryImage = async (
 		exif: {},
 	};
 	if (exifData) {
-		image.exif = {
+		// Calculate shutterSpeed safely, only if ExposureTime is valid
+		let shutterSpeed: number | undefined = undefined;
+		if (isValidNumber(exifData.ExposureTime) && exifData.ExposureTime > 0) {
+			shutterSpeed = 1 / exifData.ExposureTime;
+			// Double-check the result is valid
+			if (!isValidNumber(shutterSpeed)) {
+				shutterSpeed = undefined;
+			}
+		}
+
+		const rawExif = {
 			captureDate: exifData.DateTimeOriginal
 				? new Date(`${exifData.DateTimeOriginal} UTC`)
 				: undefined,
@@ -26,9 +71,12 @@ export const createGalleryImage = async (
 			focalLength: exifData.FocalLength,
 			iso: exifData.ISO,
 			model: exifData.Model,
-			shutterSpeed: 1 / exifData.ExposureTime,
+			shutterSpeed,
 			lensModel: exifData.LensModel,
 		};
+
+		// Clean the EXIF data to remove any invalid values
+		image.exif = cleanExifData(rawExif);
 	}
 	return image;
 };
