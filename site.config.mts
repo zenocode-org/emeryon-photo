@@ -8,16 +8,11 @@ export interface SocialLink {
 }
 
 export default {
-	title: 'A Photographer',
+	title: 'Emeryon',
 	favicon: 'favicon.ico',
-	owner: 'A photographer',
+	owner: 'Axel Frau-Orsini',
 	profileImage: 'profile.webp',
 	socialLinks: [
-		{
-			name: 'GitHub',
-			url: 'https://github.com/zenocode-org/photo-portfolio',
-			icon: Github,
-		} as SocialLink,
 		{
 			name: 'Instagram',
 			url: 'https://www.instagram.com/',
