@@ -1,13 +1,12 @@
 ---
 import MainLayout from '../layouts/MainLayout.astro';
-import LandingHero from '../components/LandingHero-1.astro';
 import FeaturedGallery from '../components/FeaturedGallery.astro';
 import FeaturedWorkScroll from '../components/FeaturedWorkScroll.astro';
+import siteConfig from '../../site.config.mjs';
 ---
 
-<MainLayout>
-	<section class="relative min-h-screen items-center flex py-20 md:py-16 overflow-hidden">
-		<LandingHero />
+<MainLayout showBanner={true}>
+	<section class="space-y-8 hero-section">
 		<FeaturedWorkScroll />
 	</section>
 
@@ -15,3 +14,16 @@ import FeaturedWorkScroll from '../components/FeaturedWorkScroll.astro';
 		<FeaturedGallery />
 	</section>
 </MainLayout>
+
+<style>
+	.hero-section {
+		min-height: 5vh;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+
+	.featured-section {
+		margin-top: 0vh;
+	}
+</style>
