@@ -1,0 +1,61 @@
+media:
+  input: src/gallery
+  output: /src/gallery
+  categories: [image]
+  extensions: [jpg, jpeg, png, JPG, JPEG, PNG]
+
+content:
+  - name: gallery
+    label: Gallery Configuration
+    path: src/gallery/gallery.yaml
+    type: file
+    fields:
+      - name: collections
+        label: Collections
+        type: object
+        list: true
+        fields:
+          - name: id
+            label: Collection ID
+            type: string
+            description: Unique identifier for the collection (folder name)
+          - name: name
+            label: Collection Name
+            type: string
+            description: Display name for the collection
+      - name: images
+        label: Images
+        type: object
+        list: true
+        fields:
+          - name: path
+            label: Image Path
+            type: string
+            description: Relative path to image file (e.g., nature/image.jpg)
+          - name: meta
+            label: Metadata
+            type: object
+            fields:
+              - name: title
+                label: Title
+                type: string
+              - name: description
+                label: Description
+                type: text
+              - name: collections
+                label: Collections
+                type: string
+                list: true
+                description: Collection IDs this image belongs to (can include "featured")
+              - name: filmType
+                label: Film Type
+                type: string
+                description: Film type for analog photos (optional)
+              - name: analog
+                label: Analog
+                type: boolean
+                description: Whether this is an analog photo
+
+settings:
+  content:
+    merge: true

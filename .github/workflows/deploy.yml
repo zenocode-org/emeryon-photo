@@ -1,4 +1,4 @@
-name: Deploy Documentation
+name: Build and Deploy Gallery
 
 on:
   push:
@@ -8,7 +8,7 @@ on:
 
 # Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 
@@ -31,6 +31,48 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Check for image changes
+        id: check-images
+        run: |
+          # Check if commit message contains [skip ci]
+          COMMIT_MSG="${{ github.event.head_commit.message }}"
+          if [ -z "$COMMIT_MSG" ] && [ "${{ github.event_name }}" = "pull_request" ]; then
+            COMMIT_MSG="${{ github.event.pull_request.title }}"
+          fi
+          if echo "$COMMIT_MSG" | grep -qE '\[skip ci\]|\[ci skip\]'; then
+            echo "images_changed=false" >> $GITHUB_OUTPUT
+            echo "Skipping gallery generation due to [skip ci] in commit message"
+            exit 0
+          fi
+          # Check for image changes
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            # For PRs, compare against base branch
+            BASE_SHA="${{ github.event.pull_request.base.sha }}"
+            HEAD_SHA="${{ github.sha }}"
+            if git diff --name-only $BASE_SHA $HEAD_SHA | grep -qE "^src/gallery/.*\.(jpg|jpeg|png|JPG|JPEG|PNG)$"; then
+              echo "images_changed=true" >> $GITHUB_OUTPUT
+            else
+              echo "images_changed=false" >> $GITHUB_OUTPUT
+            fi
+          else
+            # For pushes, compare against previous commit (or check if files exist if no previous commit)
+            if git rev-list --count HEAD > /dev/null 2>&1 && [ "$(git rev-list --count HEAD)" -gt 1 ]; then
+              if git diff --name-only HEAD~1 HEAD | grep -qE "^src/gallery/.*\.(jpg|jpeg|png|JPG|JPEG|PNG)$"; then
+                echo "images_changed=true" >> $GITHUB_OUTPUT
+              else
+                echo "images_changed=false" >> $GITHUB_OUTPUT
+              fi
+            else
+              # First commit or no history - check if images exist
+              if find src/gallery -type f \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" \) | head -1 | grep -q .; then
+                echo "images_changed=true" >> $GITHUB_OUTPUT
+              else
+                echo "images_changed=false" >> $GITHUB_OUTPUT
+              fi
+            fi
+          fi
       - name: Detect package manager
         id: detect-package-manager
         run: |
@@ -62,6 +104,23 @@ jobs:
       - name: Install dependencies
         run: ${{ steps.detect-package-manager.outputs.manager }} ${{ steps.detect-package-manager.outputs.command }}
         working-directory: ${{ env.BUILD_PATH }}
+      - name: Generate gallery if images changed
+        if: steps.check-images.outputs.images_changed == 'true'
+        run: |
+          ${{ steps.detect-package-manager.outputs.runner }} tsx src/data/gallery-generator.ts src/gallery
+        working-directory: ${{ env.BUILD_PATH }}
+      - name: Commit gallery.yaml if changed
+        if: steps.check-images.outputs.images_changed == 'true' && github.event_name == 'push'
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          if git diff --quiet src/gallery/gallery.yaml; then
+            echo "No changes to gallery.yaml"
+          else
+            git add src/gallery/gallery.yaml
+            git commit -m "Update gallery.yaml [skip ci]" || exit 0
+            git push || exit 0
+          fi
       - name: Build with Astro
         run: |
           ${{ steps.detect-package-manager.outputs.runner }} astro build \

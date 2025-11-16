@@ -7,8 +7,6 @@ collections:
     name: Street
   - id: rassemblements
     name: Rassemblements
-  - id: equestre
-    name: Equestre
 images:
   - path: nature/nature-2.jpg
     meta:
@@ -16,7 +14,7 @@ images:
       description: Serene natural landscape capturing the essence of wilderness.
       collections:
         - nature
-    exif: {}
+      analog: false
   - path: nature/nature-3.jpg
     meta:
       title: Nature scene 3
@@ -24,14 +22,14 @@ images:
       collections:
         - featured
         - nature
-    exif: {}
+      analog: false
   - path: nature/nature-5.jpg
     meta:
       title: Nature scene 5
       description: Natural landscape showing the raw beauty of the environment.
       collections:
         - nature
-    exif: {}
+      analog: false
   - path: nature/nature-7.jpg
     meta:
       title: Nature scene 7
@@ -39,7 +37,7 @@ images:
       collections:
         - featured
         - nature
-    exif: {}
+      analog: false
   - path: nature/nature-8.jpg
     meta:
       title: Nature scene 8
@@ -48,29 +46,20 @@ images:
         - nature
       filmType: Kodak Portra 400
       analog: true
-    exif: {}
   - path: nature/L1002174.jpg
     meta:
       title: Travel scene 6
-      description: null
       collections:
         - featured
         - nature
-    exif:
-      captureDate: 2025-03-27T10:35:21.000Z
-      fNumber: 8
-      focalLength: 28
-      iso: 100
-      model: LEICA Q3
-      shutterSpeed: 1250
-      lensModel: SUMMILUX 1:1.7/28 ASPH.
+      analog: false
   - path: nature/nature-10.jpg
     meta:
       title: Nature scene 10
       description: Majestic natural landscape displaying environmental splendor.
       collections:
         - nature
-    exif: {}
+      analog: false
   - path: street/stree-1.jpg
     meta:
       title: Street photography 1
@@ -78,7 +67,7 @@ images:
       collections:
         - featured
         - street
-    exif: {}
+      analog: false
   - path: travel/travel-1.jpg
     meta:
       title: Travel scene 1
@@ -86,32 +75,16 @@ images:
       collections:
         - featured
         - travel
-    exif: {}
+      analog: false
   - path: nature/nature-1.jpg
     meta:
       title: Nature 1
-      description: ''
       collections:
         - nature
-    exif: {}
-  - path: rassemblements/DSC_5026.JPG
-    meta:
-      title: Dsc 5026
-      description: ''
-      collections:
-        - rassemblements
-    exif:
-      captureDate: 2025-11-02T12:54:00.000Z
-      fNumber: 4
-      focalLength: 35
-      iso: 100
-      model: NIKON D7500
-      shutterSpeed: 800
-      lensModel: 35.0 mm f/1.8
+      analog: false
   - path: street/DSC_5026.JPG
     meta:
       title: Dsc 5026
-      description: ''
       collections:
         - street
     exif:

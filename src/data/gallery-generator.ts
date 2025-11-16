@@ -21,10 +21,7 @@ async function generateGalleryFile(
 ): Promise<void> {
 	try {
 		let galleryObj = await loadExistingGallery(galleryDir);
-		galleryObj = mergeGalleriesObj(
-			galleryObj,
-			await createGalleryObjFrom(galleryDir, options),
-		);
+		galleryObj = mergeGalleriesObj(galleryObj, await createGalleryObjFrom(galleryDir, options));
 		await writeGalleryYaml(galleryDir, galleryObj);
 	} catch (error) {
 		console.error('Failed to create gallery file:', error);
@@ -50,9 +47,20 @@ function mergeGalleriesObj(
 	};
 }
 
+function isBackupImage(imagePath: string): boolean {
+	return imagePath.startsWith('backup/');
+}
+
 function getUpdatedImageList(targetGalleryObj: GalleryData, sourceGalleryObj: GalleryData) {
-	const imagesMap = new Map(targetGalleryObj.images.map((image) => [image.path, image]));
+	// Filter out backup images from existing gallery
+	const existingImages = targetGalleryObj.images.filter((image) => !isBackupImage(image.path));
+	const imagesMap = new Map(existingImages.map((image) => [image.path, image]));
+
+	// Only add non-backup images from source
 	sourceGalleryObj.images.forEach((image) => {
+		if (isBackupImage(image.path)) {
+			return; // Skip backup images
+		}
 		const existingImage = imagesMap.get(image.path);
 		if (existingImage === undefined) {
 			imagesMap.set(image.path, image);
@@ -63,11 +71,24 @@ function getUpdatedImageList(targetGalleryObj: GalleryData, sourceGalleryObj: Ga
 	return Array.from(imagesMap.values());
 }
 
+function isBackupCollection(collectionId: string): boolean {
+	return collectionId.startsWith('backup');
+}
+
 function getUpdatedCollectionList(targetGalleryObj: GalleryData, sourceGalleryObj: GalleryData) {
-	const collectionsMap = new Map(
-		targetGalleryObj.collections.map((collection) => [collection.id, collection]),
+	// Filter out backup collections from existing gallery
+	const existingCollections = targetGalleryObj.collections.filter(
+		(collection) => !isBackupCollection(collection.id),
 	);
+	const collectionsMap = new Map(
+		existingCollections.map((collection) => [collection.id, collection]),
+	);
+
+	// Only add non-backup collections from source
 	sourceGalleryObj.collections.forEach((collection) => {
+		if (isBackupCollection(collection.id)) {
+			return; // Skip backup collections
+		}
 		if (!collectionsMap.get(collection.id)) {
 			collectionsMap.set(collection.id, collection);
 		}
@@ -140,11 +161,7 @@ async function writeGalleryYaml(galleryDir: string, galleryObj: GalleryData) {
 
 program
 	.argument('<path to images directory>')
-	.option(
-		'--max-dimension <number>',
-		'Maximum width or height in pixels (default: 1920)',
-		'1920',
-	)
+	.option('--max-dimension <number>', 'Maximum width or height in pixels (default: 1920)', '1920')
 	.option('--quality <number>', 'JPEG/PNG quality 1-100 (default: 80)', '80')
 	.option('--skip-optimization', 'Skip image optimization', false)
 	.parse();
