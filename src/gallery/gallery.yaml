@@ -10,7 +10,7 @@ collections:
 images:
   - path: nature/nature-2.jpg
     meta:
-      title: Nature scene 2
+      title: Nature scene 45
       description: Serene natural landscape capturing the essence of wilderness.
       collections:
         - nature
