@@ -25,6 +25,7 @@ pnpm-debug.log*
 
 # app
 src/data/__tests__/gallery/gallery.yaml
+./yukina/
 
 # image backups
 **/backup/

@@ -1,0 +1,473 @@
+---
+import siteConfig from '../../site.config.mjs';
+import { ChevronDown } from 'lucide-astro';
+
+export interface Props {
+	title?: string;
+	subTitle?: string;
+	bannerImage?: string;
+}
+
+const { title, subTitle, bannerImage } = Astro.props;
+
+const hasTitle = title !== undefined || subTitle !== undefined;
+const hasHeaderImg = bannerImage !== undefined;
+
+// You can add banner images here if needed
+// Par défaut, on utilise une image de fond si aucune image n'est fournie
+let carouselImgsList: string[] = [];
+const carouselAnimationTime = `${carouselImgsList.length * 6}s`;
+
+// Image de fond par défaut - vous pouvez changer ce chemin
+const defaultBackgroundImage = '/images/travel-1.jpg';
+---
+
+<div id="banner" class="banner onload-animation-fade-in">
+	<div class="transition-main banner-inner h-full w-full">
+		{
+			!hasHeaderImg && carouselImgsList.length > 0 && (
+				<div class="carousel">
+					<ul id="carousel_imgs">
+						{carouselImgsList.map((img, index) => (
+							<li
+								class="item"
+								style={{ animationDelay: `${index * 6}s` }}
+								data-background-image={img}
+							/>
+						))}
+					</ul>
+				</div>
+			)
+		}
+		{
+			hasHeaderImg && (
+				<div class="cover">
+					<img class="item" src={bannerImage} alt="Banner" />
+				</div>
+			)
+		}
+		{
+			!hasHeaderImg && carouselImgsList.length === 0 && (
+				<div class="cover default-background">
+					<div
+						class="background-image"
+						style={`background-image: url('${defaultBackgroundImage}');`}
+					/>
+				</div>
+			)
+		}
+		<div class="relative h-full w-full flex items-center justify-center">
+			<div class="banner-content">
+				<div class="flex flex-col items-center justify-center">
+					<h1 class:list={[hasTitle ? 'title-normal' : 'title-index']} class="title">
+						{title ?? siteConfig.title}
+					</h1>
+					<h2 class="subtitle">{subTitle ?? siteConfig.owner}</h2>
+					<button
+						id="banner-scroll-button"
+						onclick="scrollToGallery();"
+						class="banner-scroll-btn"
+						aria-label="Voir la galerie"
+					>
+						<span class="banner-scroll-text">Voir la galerie</span>
+						<ChevronDown size={24} class="banner-scroll-icon" />
+					</button>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="waves" id="header-waves">
+		<svg
+			class="waves"
+			xmlns="http://www.w3.org/2000/svg"
+			xmlns:xlink="http://www.w3.org/1999/xlink"
+			viewBox="0 24 150 28"
+			preserveAspectRatio="none"
+			shape-rendering="auto"
+		>
+			<defs>
+				<path
+					id="gentle-wave"
+					d="M-160 44c30 0 58-18 88-18s 58 18 88 18 58-18 88-18 58 18 88 18 v44h-352z"
+				>
+				</path>
+			</defs>
+			<g class="parallax">
+				<use
+					xlink:href="#gentle-wave"
+					x="48"
+					y="0"
+					class="opacity-25"
+					style={{ animationDelay: '-2s', animationDuration: '7s' }}></use>
+				<use
+					xlink:href="#gentle-wave"
+					x="48"
+					y="3"
+					class="opacity-50"
+					style={{ animationDelay: '-3s', animationDuration: '10s' }}></use>
+				<use
+					xlink:href="#gentle-wave"
+					x="48"
+					y="5"
+					class="opacity-75"
+					style={{ animationDelay: '-4s', animationDuration: '13s' }}></use>
+				<use
+					xlink:href="#gentle-wave"
+					x="48"
+					y="7"
+					style={{ animationDelay: '-5s', animationDuration: '20s' }}></use>
+			</g>
+		</svg>
+	</div>
+</div>
+
+<script>
+	const styleElement = document.createElement('style');
+	const carouselImgs = document.getElementById('carousel_imgs');
+	const carouselImgsCount = carouselImgs?.children.length ?? 0;
+
+	if (carouselImgsCount > 0) {
+		const carouselAnimation = `
+		@keyframes carousel-animation {
+			0% {
+				opacity: 0;
+				transform: scale(1);
+			}
+			3% {
+				opacity: 1;
+			}
+			8% {
+				opacity: 1;
+				animation-timing-function: ease-out;
+			}
+			${100 / carouselImgsCount}% {
+				opacity: 1;
+			}
+			${100 / carouselImgsCount + 50 / carouselImgsCount}% {
+				opacity: 0;
+				animation-timing-function: ease-out;
+			}
+			100% {
+				opacity: 0;
+				transform: scale(2);
+			}
+		}
+		`;
+		styleElement.textContent = carouselAnimation;
+		let bannerElement = document.getElementById('banner');
+		if (bannerElement && !bannerElement.querySelector('style'))
+			bannerElement.appendChild(styleElement);
+	}
+</script>
+
+<script is:inline>
+	const scrollToGallery = () => {
+		const featuredSection = document.querySelector('.featured-section');
+		if (featuredSection) {
+			featuredSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+		} else {
+			window.scrollTo({
+				top: window.innerHeight,
+				behavior: 'smooth',
+			});
+		}
+	};
+</script>
+
+<style define:vars={{ carouselAnimationTime }}>
+	.banner {
+		position: relative;
+		height: 100vh;
+		opacity: 1;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+
+	.carousel {
+		position: absolute;
+		left: 0;
+		top: 0;
+		z-index: -10;
+		display: block;
+		height: 100vh;
+		width: 100%;
+		overflow: hidden;
+		background-color: white;
+		animation-fill-mode: forwards;
+	}
+
+	.carousel::before {
+		position: absolute;
+		left: 0;
+		top: 0;
+		z-index: 10;
+		display: block;
+		height: 100%;
+		width: 100%;
+		background-color: rgba(0, 0, 0, 0.25);
+		transition: all 0.3s;
+		content: '';
+	}
+
+	.dark .carousel::before {
+		background-color: rgba(0, 0, 0, 0.3);
+	}
+
+	.carousel .item {
+		position: absolute;
+		left: 0;
+		top: 0;
+		z-index: 0;
+		height: 100%;
+		width: 100%;
+		transform-origin: center;
+		background-size: cover;
+		background-position: center;
+		background-repeat: no-repeat;
+		opacity: 0;
+		animation: carousel-animation var(--carouselAnimationTime) linear infinite 0s;
+		backface-visibility: hidden;
+		transform-style: preserve-3d;
+	}
+
+	.cover {
+		position: absolute;
+		left: 0;
+		top: 0;
+		z-index: 0;
+		display: block;
+		height: 100vh;
+		width: 100%;
+		overflow: hidden;
+		background-color: white;
+	}
+
+	.default-background {
+		position: absolute;
+		left: 0;
+		top: 0;
+		z-index: 0;
+		display: block;
+		height: 100vh;
+		width: 100%;
+		overflow: hidden;
+		background-color: white;
+	}
+
+	.default-background::before {
+		position: absolute;
+		left: 0;
+		top: 0;
+		z-index: 10;
+		display: block;
+		height: 100%;
+		width: 100%;
+		background-color: rgba(0, 0, 0, 0.25);
+		transition: all 0.3s;
+		content: '';
+	}
+
+	.dark .default-background::before {
+		background-color: rgba(0, 0, 0, 0.3);
+	}
+
+	.background-image {
+		position: absolute;
+		left: 0;
+		top: 0;
+		width: 100%;
+		height: 100%;
+		background-size: cover;
+		background-position: center;
+		background-repeat: no-repeat;
+		z-index: 0;
+	}
+
+	.cover::before {
+		position: absolute;
+		left: 0;
+		top: 0;
+		z-index: 10;
+		display: block;
+		height: 100%;
+		width: 100%;
+		background-color: rgba(0, 0, 0, 0.25);
+		transition: all 0.3s;
+		content: '';
+	}
+
+	.dark .cover::before {
+		background-color: rgba(0, 0, 0, 0.3);
+	}
+
+	.cover .item {
+		height: 100%;
+		width: 100%;
+		object-fit: cover;
+	}
+
+	.banner-content {
+		width: 100%;
+		max-width: 80%;
+		text-align: center;
+	}
+
+	@media (min-width: 1024px) {
+		.banner-content {
+			max-width: 75%;
+		}
+	}
+
+	.title {
+		text-align: center;
+		font-weight: 700;
+		color: var(--title-color);
+		filter: drop-shadow(0 10px 8px rgb(0 0 0 / 0.04)) drop-shadow(0 4px 3px rgb(0 0 0 / 0.1));
+		font-family: var(--title-font);
+		margin: 0;
+	}
+
+	.title-index {
+		margin-bottom: 0;
+		font-size: 3.75rem;
+		line-height: 5rem;
+	}
+
+	@media (min-width: 1024px) {
+		.title-index {
+			margin-bottom: 0.25rem;
+			font-size: 6rem;
+			line-height: 1;
+		}
+	}
+
+	.title-normal {
+		margin-bottom: 0.25rem;
+		font-size: 1.875rem;
+		line-height: 2.25rem;
+	}
+
+	@media (min-width: 1024px) {
+		.title-normal {
+			font-size: 3rem;
+			line-height: 1;
+		}
+	}
+
+	.subtitle {
+		text-align: center;
+		font-size: 1.25rem;
+		line-height: 1.75rem;
+		color: var(--subtitle-color);
+		filter: drop-shadow(0 4px 3px rgb(0 0 0 / 0.07)) drop-shadow(0 2px 2px rgb(0 0 0 / 0.06));
+		font-family: var(--subtitle-font);
+		transition: color 0.3s ease;
+		margin: 0;
+		margin-top: 1rem;
+	}
+
+	@media (min-width: 1024px) {
+		.subtitle {
+			font-size: 1.875rem;
+			line-height: 2.25rem;
+			margin-top: 1.5rem;
+		}
+	}
+
+	.banner-scroll-btn {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		gap: 0.5rem;
+		padding: 1rem 2rem;
+		background-color: transparent;
+		border: 2px solid var(--subtitle-color);
+		border-radius: 0.5rem;
+		color: var(--subtitle-color);
+		font-family: var(--primary-font);
+		font-size: 1rem;
+		font-weight: 500;
+		cursor: pointer;
+		transition: all 0.3s ease;
+		margin-top: 2rem;
+		backdrop-filter: blur(8px);
+		background-color: var(--card-color-transparent);
+	}
+
+	.banner-scroll-btn:hover {
+		background-color: var(--subtitle-color);
+		color: var(--background-color);
+		transform: translateY(-2px);
+	}
+
+	.banner-scroll-btn:active {
+		transform: translateY(0);
+	}
+
+	.banner-scroll-text {
+		font-size: 0.875rem;
+		letter-spacing: 0.05em;
+	}
+
+	.banner-scroll-icon {
+		animation: bounce 2s infinite;
+	}
+
+	@keyframes bounce {
+		0%,
+		20%,
+		50%,
+		80%,
+		100% {
+			transform: translateY(0);
+		}
+		40% {
+			transform: translateY(-10px);
+		}
+		60% {
+			transform: translateY(-5px);
+		}
+	}
+
+	.waves {
+		position: absolute;
+		bottom: -1px;
+		height: 10vh;
+		max-height: 9.375rem;
+		min-height: 3.125rem;
+		width: 100%;
+	}
+
+	@media (min-width: 768px) {
+		.waves {
+			height: 15vh;
+		}
+	}
+
+	.waves > .parallax use {
+		fill: var(--background-color);
+		animation: wave 25s cubic-bezier(0.5, 0.5, 0.45, 0.5) infinite;
+	}
+
+	@keyframes wave {
+		0% {
+			transform: translate3d(-90px, 0, 0);
+		}
+		100% {
+			transform: translate3d(85px, 0, 0);
+		}
+	}
+
+	@keyframes banner-onload-animation {
+		0% {
+			opacity: 0;
+			height: calc(var(--banner-height) + 4rem);
+		}
+		100% {
+			opacity: 1;
+			height: var(--banner-height);
+		}
+	}
+</style>

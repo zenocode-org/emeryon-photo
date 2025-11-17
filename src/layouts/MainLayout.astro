@@ -3,9 +3,19 @@ import '../styles/global.css';
 import siteConfig from '../../site.config.mjs';
 import Footer from '../components/Footer.astro';
 import NavBar from '../components/NavBar.astro';
+import Banner from '../components/Banner.astro';
 
 const owner = siteConfig.owner;
 const favicon = siteConfig.favicon;
+
+export interface Props {
+	title?: string;
+	subTitle?: string;
+	bannerImage?: string;
+	showBanner?: boolean;
+}
+
+const { title, subTitle, bannerImage, showBanner = false } = Astro.props;
 ---
 
 <html lang="en" class="h-full">
@@ -19,14 +29,81 @@ const favicon = siteConfig.favicon;
 		<meta name="viewport" content="width=device-width" />
 		<meta name="generator" content={Astro.generator} />
 		<title>{owner}</title>
+		
+		<script is:inline>
+			// Appliquer le thème immédiatement pour éviter le flash blanc
+			(function() {
+				const theme = localStorage.getItem("theme") || "light";
+				document.documentElement.setAttribute("data-theme", theme);
+				if (theme === "dark") {
+					document.documentElement.classList.add("dark");
+				} else {
+					document.documentElement.classList.remove("dark");
+				}
+			})();
+		</script>
 	</head>
 	<body>
 		<NavBar />
-		<main>
-			<slot />
-		</main>
-		<Footer />
+
+		{
+			showBanner && (
+				<Banner
+					title={title}
+					subTitle={subTitle}
+					bannerImage={bannerImage}
+				/>
+			)
+		}
+
+		<div class="main-container my-10">
+			<div class="flex flex-row items-start xl:space-x-4">
+				<div class="transition-leaving w-full space-y-8">
+					<main class="content onload-animation">
+						<slot />
+					</main>
+					<Footer />
+				</div>
+			</div>
+		</div>
 	</body>
 </html>
+
+<style>
+	body {
+		background-color: var(--background-color);
+	}
+
+	.main-container {
+		width: 100%;
+		margin-left: auto;
+		margin-right: auto;
+	}
+
+	@media (min-width: 768px) {
+		.main-container {
+			min-width: 80%;
+			max-width: 80%;
+		}
+	}
+
+	@media (min-width: 1024px) {
+		.main-container {
+			min-width: var(--page-width-lg);
+			max-width: var(--page-width-lg);
+		}
+	}
+
+	@media (min-width: 1280px) {
+		.main-container {
+			min-width: var(--page-width-xl);
+			max-width: var(--page-width-xl);
+		}
+
+		.content {
+			width: var(--page-width-xl);
+		}
+	}
+</style>
 
 <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>

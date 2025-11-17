@@ -4,7 +4,7 @@ import { ChevronDown } from 'lucide-astro';
 
 <div
 	id="featured-gallery-scroll"
-	class="absolute bottom-10 left-0 right-0 flex justify-center transition-opacity duration-300"
+	class="absolute bottom-10 left-0 right-0 flex justify-center transition-opacity duration-300 z-10"
 >
 	<button
 		onclick="scrollToContent();"
@@ -18,10 +18,15 @@ import { ChevronDown } from 'lucide-astro';
 
 <script is:inline>
 	const scrollToContent = () => {
-		window.scrollTo({
-			top: window.innerHeight,
-			behavior: 'smooth',
-		});
+		const featuredSection = document.querySelector('.featured-section');
+		if (featuredSection) {
+			featuredSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+		} else {
+			window.scrollTo({
+				top: window.innerHeight,
+				behavior: 'smooth',
+			});
+		}
 	};
 
 	document.addEventListener('DOMContentLoaded', () => {
