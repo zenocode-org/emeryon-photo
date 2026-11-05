@@ -4,7 +4,7 @@ import MainLayout from '../../layouts/MainLayout.astro';
 
 <MainLayout title="Galeries" description="Retrouvez mes galeries publiées.">
 	<section class="py-16 pt-24">
-		<div class="container-custom">
+		<div class="mx-auto px-4 sm:px-6 lg:px-8 max-w-[1400px] min-[1920px]:max-w-[1900px] min-[2400px]:max-w-[2400px]">
 			<div class="mb-12 text-center">
 				<h1 class="text-4xl md:text-5xl font-bold mb-4">Galeries</h1>
 				<p class="text-gray-600 max-w-xl mx-auto">Retrouvez mes galeries publiées</p>
@@ -117,6 +117,26 @@ import MainLayout from '../../layouts/MainLayout.astro';
 		max-width: 34rem;
 		margin: 0 auto;
 		padding: 0 !important;
+	}
+	/* Scale with the screen: 2 columns on phones/laptops, more on large and ultrawide displays */
+	@media (min-width: 1024px) {
+		#lumys-widget .lumys-widget-wrapper {
+			grid-template-columns: repeat(3, minmax(0, 1fr));
+			max-width: 60rem;
+		}
+	}
+	@media (min-width: 1536px) {
+		#lumys-widget .lumys-widget-wrapper {
+			grid-template-columns: repeat(4, minmax(0, 1fr));
+			gap: 1rem;
+			max-width: 80rem;
+		}
+	}
+	@media (min-width: 2200px) {
+		#lumys-widget .lumys-widget-wrapper {
+			grid-template-columns: repeat(5, minmax(0, 1fr));
+			max-width: 130rem;
+		}
 	}
 	#lumys-widget .lumys-widget-wrapper .lumys-gallery-wrapper {
 		margin: 0 !important;
