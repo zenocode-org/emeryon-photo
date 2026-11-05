@@ -1,5 +1,4 @@
 ---
-import { Image } from 'astro:assets';
 import type { Image as ImageType } from '../data/galleryData';
 import PhotoPreview from './react/PhotoPreview';
 
@@ -8,7 +7,7 @@ interface Props {
 	priority?: boolean;
 }
 
-const { image, priority = false } = Astro.props;
+const { image } = Astro.props;
 
 const formatExifValue = (value: number | undefined, unit: string = '') => {
 	if (value === undefined) return null;
@@ -17,7 +16,7 @@ const formatExifValue = (value: number | undefined, unit: string = '') => {
 
 const formatDate = (date: Date | undefined) => {
 	if (!date) return null;
-	return new Intl.DateTimeFormat('en-US', {
+	return new Intl.DateTimeFormat('fr-FR', {
 		year: 'numeric',
 		month: 'long',
 		day: 'numeric',
@@ -65,24 +64,24 @@ const formatDate = (date: Date | undefined) => {
 						image.exif && (
 							<div class="border-t border-gray-200 pt-6">
 								<h2 class="text-sm font-semibold uppercase tracking-wide text-gray-500 mb-4">
-									Camera Settings
+									Réglages
 								</h2>
 								<dl class="space-y-3">
 									{image.exif.model && (
 										<div>
-											<dt class="text-sm text-gray-500">Camera</dt>
+											<dt class="text-sm text-gray-500">Appareil</dt>
 											<dd class="text-base font-medium">{image.exif.model}</dd>
 										</div>
 									)}
 									{image.exif.lensModel && (
 										<div>
-											<dt class="text-sm text-gray-500">Lens</dt>
+											<dt class="text-sm text-gray-500">Objectif</dt>
 											<dd class="text-base font-medium">{image.exif.lensModel}</dd>
 										</div>
 									)}
 									{image.exif.focalLength && (
 										<div>
-											<dt class="text-sm text-gray-500">Focal Length</dt>
+											<dt class="text-sm text-gray-500">Focale</dt>
 											<dd class="text-base font-medium">
 												{formatExifValue(image.exif.focalLength, 'mm')}
 											</dd>
@@ -90,7 +89,7 @@ const formatDate = (date: Date | undefined) => {
 									)}
 									{image.exif.fNumber && (
 										<div>
-											<dt class="text-sm text-gray-500">Aperture</dt>
+											<dt class="text-sm text-gray-500">Ouverture</dt>
 											<dd class="text-base font-medium">f/{image.exif.fNumber}</dd>
 										</div>
 									)}
@@ -102,7 +101,7 @@ const formatDate = (date: Date | undefined) => {
 									)}
 									{image.exif.shutterSpeed && (
 										<div>
-											<dt class="text-sm text-gray-500">Shutter Speed</dt>
+											<dt class="text-sm text-gray-500">Vitesse</dt>
 											<dd class="text-base font-medium">1/{image.exif.shutterSpeed}s</dd>
 										</div>
 									)}
@@ -127,7 +126,7 @@ const formatDate = (date: Date | undefined) => {
 								<div class="flex flex-wrap gap-2">
 									{image.collections.map((collectionId) => (
 										<a
-											href={`/collections/${collectionId}`}
+											href={`/travail/${collectionId}`}
 											class="px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 rounded transition-colors"
 										>
 											{collectionId}

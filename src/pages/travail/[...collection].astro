@@ -8,7 +8,7 @@ import { Grid3x3, List, Filter } from 'lucide-astro';
 
 const allCollection = {
 	id: undefined,
-	name: 'All',
+	name: 'Toutes',
 };
 const collections = [allCollection, ...(await getCollections())];
 const { collection } = Astro.params;
@@ -23,12 +23,15 @@ export const getStaticPaths = async () => {
 };
 ---
 
-<MainLayout>
+<MainLayout
+	title={collection ? (collections.find((c) => c.id === collection)?.name ?? "Mon travail") : "Mon travail"}
+	description="Explorez la collection de photographies."
+>
 	<section class="py-16 pt-24">
 		<div class="container-custom">
 			<div class="mb-16 text-center">
-				<h1 class="text-4xl md:text-5xl font-bold mb-4">Gallery</h1>
-				<p class="text-gray-600 max-w-xl mx-auto">Explore my collection of photographic works</p>
+				<h1 class="text-4xl md:text-5xl font-bold mb-4">Mon travail</h1>
+				<p class="text-gray-600 max-w-xl mx-auto">Explorez mes travaux photographiques</p>
 			</div>
 
 			<div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
@@ -54,7 +57,7 @@ export const getStaticPaths = async () => {
 							<button
 								id="toggle-filters"
 								class="view-switcher-btn px-4 py-2 border border-gray-300 rounded transition-colors hover:bg-gray-50 flex items-center gap-2"
-								title="Toggle filters"
+								title="Afficher les filtres"
 							>
 								<Filter size={18} />
 							</button>
@@ -91,6 +94,7 @@ export const getStaticPaths = async () => {
 				</aside>
 			</div>
 		</div>
+
 	</section>
 </MainLayout>
 

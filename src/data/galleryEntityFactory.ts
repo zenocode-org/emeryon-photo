@@ -1,5 +1,6 @@
 import path from 'path';
 import type { GalleryImage, ImageExif } from './galleryData.ts';
+import { readFile } from 'node:fs/promises';
 import exifr from 'exifr';
 
 /**
@@ -41,8 +42,9 @@ export const createGalleryImage = async (
 	galleryDir: string,
 	file: string,
 ): Promise<GalleryImage> => {
-	const relativePath = path.relative(galleryDir, file);
-	const exifData = await exifr.parse(file);
+	// Always use forward slashes so gallery.yaml paths are portable (Windows uses '\')
+	const relativePath = path.relative(galleryDir, file).split(path.sep).join(path.posix.sep);
+	const exifData = await exifr.parse(await readFile(file));
 	const image = {
 		path: relativePath,
 		meta: {
@@ -90,7 +92,7 @@ function toReadableCaption(input: string): string {
 }
 
 function collectionIdForImage(relativePath: string) {
-	return path.dirname(relativePath) === '.' ? [] : [path.dirname(relativePath)];
+	return path.posix.dirname(relativePath) === '.' ? [] : [path.posix.dirname(relativePath)];
 }
 
 export const createGalleryCollection = (dir: string) => {

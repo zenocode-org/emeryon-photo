@@ -12,7 +12,7 @@ const { images, className = '' } = Astro.props;
 ---
 
 <div class={`photos-large space-y-1 ${className}`}>
-	{images.map((image, index) => (
+	{images.map((image) => (
 		<article
 			class="photo-large-item photo-item-vertical border-b border-gray-200 pb-12 mb-12 last:border-b-0 last:mb-0"
 			data-collections={JSON.stringify(image.collections)}

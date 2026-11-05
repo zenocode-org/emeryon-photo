@@ -26,15 +26,15 @@ const relatedImages = allImages.filter(
 );
 ---
 
-<MainLayout>
+<MainLayout title={image.title} description={image.description || `Photographie « ${image.title} ».`}>
 	<section class="py-16 pt-24">
 		<div class="container-custom">
 			<a
-				href={`/collections`}
+				href="/travail"
 				class="inline-flex items-center gap-2 text-gray-700 hover:text-black transition-colors mb-6 group"
 			>
 				<ArrowLeft size={20} class="group-hover:-translate-x-1 transition-transform" />
-				<span>Retour à la galerie</span>
+				<span>Retour à mon travail</span>
 			</a>
 			<PhotoDetailPage image={image} allImages={allImages} relatedImages={relatedImages} />
 		</div>

@@ -42,7 +42,7 @@ export default function ZoomControls({
 	const shouldZoomTo2x = zoomLevel !== 2;
 
 	const imagePageUrl = props.imageTitle
-		? `/photo/photo/${encodeURIComponent(props.imageTitle)}`
+		? `/photo/${encodeURIComponent(props.imageTitle)}`
 		: null;
 
 	const buttonClass = clsx(
@@ -57,7 +57,7 @@ export default function ZoomControls({
 			type="button"
 			className={buttonClass}
 			onClick={() => (shouldZoomTo2x ? zoomTo(2) : reset())}
-			title={shouldZoomTo2x ? 'Zoom in' : 'Reset zoom'}
+			title={shouldZoomTo2x ? 'Zoom avant' : 'Réinitialiser le zoom'}
 		>
 			{shouldZoomTo2x ? (
 				<RiCollapseDiagonalLine className="shrink-0" size={20} />
@@ -68,13 +68,13 @@ export default function ZoomControls({
 	);
 
 	const linkButton = imagePageUrl ? (
-		<a href={imagePageUrl} className={clsx(buttonClass, 'no-underline')} title="View image page">
+		<a href={imagePageUrl} className={clsx(buttonClass, 'no-underline')} title="Voir la page de la photo">
 			<RiExternalLinkLine className="shrink-0" size={20} />
 		</a>
 	) : null;
 
 	const closeButton = (
-		<button type="button" className={buttonClass} onClick={close} title="Close">
+		<button type="button" className={buttonClass} onClick={close} title="Fermer">
 			<RiCloseLine className="shrink-0" size={20} />
 		</button>
 	);

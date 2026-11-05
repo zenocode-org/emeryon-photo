@@ -67,7 +67,7 @@ export default function useImageZoomControls({
 							zoomOut: 3,
 						},
 						ready: ({ target }) => {
-							refViewerContainer.current = (target as any).viewer.viewer as HTMLDivElement;
+							refViewerContainer.current = (target as unknown as { viewer: { viewer: HTMLDivElement } }).viewer.viewer;
 						},
 						url: (image: HTMLImageElement) => {
 							// Addresses Safari bug where images don't load
@@ -109,7 +109,7 @@ export default function useImageZoomControls({
 		initViewer();
 
 		// Also try after delays in case image loads asynchronously
-		const timeoutIds: NodeJS.Timeout[] = [];
+		const timeoutIds: ReturnType<typeof setTimeout>[] = [];
 		[100, 500, 1000].forEach((delay) => {
 			const timeoutId = setTimeout(() => {
 				if (!viewerRef.current) {

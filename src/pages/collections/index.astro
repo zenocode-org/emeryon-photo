@@ -1,0 +1,177 @@
+---
+import MainLayout from '../../layouts/MainLayout.astro';
+---
+
+<MainLayout title="Galeries" description="Retrouvez mes galeries publiées.">
+	<section class="py-16 pt-24">
+		<div class="container-custom">
+			<div class="mb-12 text-center">
+				<h1 class="text-4xl md:text-5xl font-bold mb-4">Galeries</h1>
+				<p class="text-gray-600 max-w-xl mx-auto">Retrouvez mes galeries publiées</p>
+			</div>
+
+			<form
+				id="lumys-access-form"
+				class="max-w-md mx-auto mb-12 flex flex-col items-center gap-3"
+				novalidate
+			>
+				<label for="lumys-access-number" class="text-sm text-gray-600">
+					Vous avez un numéro de galerie ?
+				</label>
+				<div class="flex w-full gap-2">
+					<input
+						id="lumys-access-number"
+						type="text"
+						inputmode="numeric"
+						autocomplete="off"
+						placeholder="Numéro de galerie"
+						class="min-w-0 flex-1 px-4 py-3 border-2 border-black rounded-md bg-white text-center"
+					/>
+					<button
+						type="submit"
+						class="px-5 py-3 border-2 border-black rounded-md bg-black text-white hover:bg-white hover:text-black transition-colors duration-300 whitespace-nowrap cursor-pointer"
+					>
+						Consulter ma galerie
+					</button>
+				</div>
+				<p id="lumys-access-error" class="text-sm text-red-700 min-h-5" role="alert" aria-live="polite">
+				</p>
+			</form>
+
+			<div id="lumys-widget"></div>
+
+			<div class="mt-16 text-center">
+				<a
+					href="/travail"
+					class="inline-block px-6 py-3 border-2 border-black rounded-md hover:bg-black hover:text-white transition-all duration-300"
+				>
+					Voir mon travail
+				</a>
+			</div>
+		</div>
+	</section>
+</MainLayout>
+
+<script>
+	const form = document.getElementById('lumys-access-form') as HTMLFormElement | null;
+	const input = document.getElementById('lumys-access-number') as HTMLInputElement | null;
+	const errorEl = document.getElementById('lumys-access-error');
+
+	form?.addEventListener('submit', async (event) => {
+		event.preventDefault();
+		const { lumysUrl, lumysApiKey } = window as unknown as {
+			lumysUrl?: string;
+			lumysApiKey?: string;
+		};
+		const number = input?.value.trim() ?? '';
+		const setError = (message: string) => {
+			if (errorEl) errorEl.textContent = message;
+		};
+
+		setError('');
+		if (!number) return setError('Veuillez saisir le numéro de votre galerie.');
+		if (!lumysUrl || !lumysApiKey) return setError('Service momentanément indisponible.');
+
+		try {
+			const response = await fetch(
+				`${lumysUrl}/api/widget/quickAccess?apiKey=${encodeURIComponent(lumysApiKey)}&number=${encodeURIComponent(number)}`,
+			);
+			const data = await response.json();
+			if (data.message !== 'ok') return setError(data.message || 'Galerie introuvable.');
+
+			// Only follow links that stay on the Lumys domain
+			const target = new URL(data.url);
+			const expectedHost = new URL(lumysUrl).hostname.split('.').slice(-2).join('.');
+			if (target.protocol !== 'https:' || !target.hostname.endsWith(expectedHost)) {
+				return setError('Lien de galerie invalide.');
+			}
+			window.location.href = target.href;
+		} catch {
+			setError('Impossible de contacter le service. Réessayez plus tard.');
+		}
+	});
+</script>
+
+<!--Lumys-->
+<script is:inline>
+	var lumysUrl = 'https://app.lumys.photo';
+	var lumysApiKey = '3arpyqfejgfhozo8';
+	// var lumysCategory = "votre catégorie";
+	!(function (d, s, w) {
+		if (d.getElementById(w)) return;
+		var g = d.createElement(s),
+			e = d.getElementsByTagName(s)[0];
+		g.id = w;
+		g.src = lumysUrl + '/widget/lumys-widget-v1.js';
+		e.parentNode.insertBefore(g, e);
+	})(document, 'script', 'lumys-widget-loader');
+</script>
+<!--fin Lumys-->
+
+<style is:global>
+	/* Lumys widget: two compact columns instead of the default large fixed-size thumbnails */
+	#lumys-widget .lumys-widget-wrapper {
+		display: grid !important;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: 0.75rem;
+		max-width: 34rem;
+		margin: 0 auto;
+		padding: 0 !important;
+	}
+	#lumys-widget .lumys-widget-wrapper .lumys-gallery-wrapper {
+		margin: 0 !important;
+	}
+	#lumys-widget .lumys-widget-wrapper .lumys-gallery {
+		float: none !important;
+		width: 100% !important;
+		max-width: none !important;
+		max-height: none !important;
+		height: auto !important;
+		margin: 0 !important;
+	}
+	#lumys-widget .lumys-widget-wrapper .lumys-cover-content {
+		aspect-ratio: 3 / 2;
+		height: auto !important;
+	}
+	#lumys-widget .lumys-widget-wrapper .lumys-data {
+		min-height: 0 !important;
+	}
+	#lumys-widget .lumys-widget-wrapper .lumys-data h3,
+	#lumys-widget .lumys-widget-wrapper .lumys-data .lumys-title {
+		font-family: inherit !important;
+		font-size: 13px !important;
+		font-weight: 500 !important;
+		line-height: 1.35 !important;
+		letter-spacing: 0.04em !important;
+		margin: 0 !important;
+		padding: 12px 10px !important;
+		height: auto !important;
+		overflow: visible !important;
+		white-space: normal !important;
+		text-overflow: clip !important;
+		overflow-wrap: anywhere;
+	}
+	/* Subtle hover: light zoom, no coloured tint (overrides the widget's built-in hover effects) */
+	#lumys-widget .lumys-widget-wrapper .lumys-gallery {
+		background: transparent !important;
+	}
+	#lumys-widget .lumys-widget-wrapper .lumys-gallery .lumys-cover {
+		width: 100% !important;
+		opacity: 1 !important;
+		filter: none !important;
+		transform: scale(1) !important;
+		transition: transform 0.5s ease !important;
+	}
+	#lumys-widget .lumys-widget-wrapper .lumys-gallery:hover .lumys-cover {
+		opacity: 1 !important;
+		transform: scale(1.03) !important;
+	}
+	#lumys-widget .lumys-widget-wrapper .lumys-gallery .lumys-cover::before,
+	#lumys-widget .lumys-widget-wrapper .lumys-gallery .lumys-cover::after {
+		display: none !important;
+	}
+	/* Hide the "Un service proposé par Lumys" footer added by the widget */
+	#lumys-widget .footer {
+		display: none !important;
+	}
+</style>
