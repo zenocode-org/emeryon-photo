@@ -35,11 +35,15 @@ jobs:
           fetch-depth: 0
       - name: Check for image changes
         id: check-images
+        env:
+          # Passed via env (not inlined in the script) so quotes or shell syntax in a commit message cannot break or hijack the step
+          HEAD_COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
         run: |
           # Check if commit message contains [skip ci]
-          COMMIT_MSG="${{ github.event.head_commit.message }}"
+          COMMIT_MSG="$HEAD_COMMIT_MESSAGE"
           if [ -z "$COMMIT_MSG" ] && [ "${{ github.event_name }}" = "pull_request" ]; then
-            COMMIT_MSG="${{ github.event.pull_request.title }}"
+            COMMIT_MSG="$PR_TITLE"
           fi
           if echo "$COMMIT_MSG" | grep -qE '\[skip ci\]|\[ci skip\]'; then
             echo "images_changed=false" >> $GITHUB_OUTPUT
